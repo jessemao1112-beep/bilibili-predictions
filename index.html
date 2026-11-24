@@ -351,20 +351,21 @@
     [data-live] li::after { transition: none; }
   }
   .comments-dock {
+    --sheet-open-height: clamp(60px, 68dvh, 560px);
     position: sticky;
-    bottom: 0;
+    bottom: calc(60px - var(--sheet-open-height));
     z-index: 2;
     width: min(100%, 520px);
-    height: 60px;
+    height: var(--sheet-open-height);
     margin-inline: auto;
+    overflow-anchor: none;
   }
   .comments-sheet {
-    --sheet-open-height: clamp(60px, 68dvh, 560px);
     position: absolute;
     inset: auto 0 0;
     display: flex;
     flex-direction: column;
-    height: 60px;
+    height: var(--sheet-open-height);
     overflow: hidden;
     border-radius: 16px 16px 0 0;
     background: var(--white);
@@ -377,7 +378,6 @@
     width: min(100%, 520px);
     margin-inline: auto;
   }
-  .comments-sheet[data-open="true"] { height: var(--sheet-open-height); }
   .comments-sheet[data-dragging] { transition: none; }
   .comments-toggle {
     display: flex;
@@ -417,12 +417,13 @@
     display: flex;
     flex-direction: column;
     gap: 0;
-    overflow-y: auto;
+    overflow-y: hidden;
     overscroll-behavior: contain;
     margin: 0;
     padding: 0 20px max(12px, env(safe-area-inset-bottom));
   }
-  .comments-list li { padding: 12px 0; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: transparent; display: block; }
+  .comments-dock[data-list-scroll] .comments-list { overflow-y: auto; }
+  .comments-list li { flex: none; padding: 12px 0; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: transparent; display: block; }
   .comments-list li::after { content: none; }
   .comment-byline { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; font-size: .875rem; }
   .comment-avatar {
@@ -780,6 +781,7 @@
     { names: ["马天宇", "张萌"], question: "马天宇和张萌会一起回到雪山吗？", choices: ["会一起回去", "各自启程"], dailyShares: [44, 52, 47, 55, 49, 56, 51], pool: 8600 },
     { names: ["白小纯", "青稚"], question: "白小纯和青稚会在终点站重逢吗？", choices: ["会重逢", "会错过"], dailyShares: [37, 41, 48, 54, 62, 58, 68], pool: 11200 }
   ];
+  const commentsDock = document.querySelector(".comments-dock");
   const commentsSheet = document.querySelector(".comments-sheet");
   const commentsToggle = document.querySelector(".comments-toggle");
   const commentsContent = document.querySelector(".comments-content");
@@ -875,22 +877,42 @@
   });
   showComments(0);
 
+  function visibleDockHeight() {
+    return Math.min(commentsDock.offsetHeight, Math.max(60, innerHeight - commentsDock.getBoundingClientRect().top));
+  }
+
+  function syncCommentsVisibility() {
+    const pinned = commentsSheet.dataset.open === "true";
+    const visible = visibleDockHeight();
+    const expanded = pinned || visible > 61;
+    commentsToggle.setAttribute("aria-expanded", String(expanded));
+    commentsContent.inert = !expanded;
+    commentsDock.toggleAttribute("data-list-scroll", pinned || visible >= commentsDock.offsetHeight - 1);
+  }
+
   function setCommentsOpen(open) {
     commentsSheet.dataset.open = String(open);
-    commentsToggle.setAttribute("aria-expanded", String(open));
-    commentsContent.inert = !open;
+    if (!open) {
+      const revealed = innerHeight - commentsDock.getBoundingClientRect().top - 60;
+      if (revealed > 1) scrollBy(0, -revealed);
+    }
+    syncCommentsVisibility();
   }
+
+  window.addEventListener("scroll", syncCommentsVisibility, { passive: true });
+  window.addEventListener("resize", syncCommentsVisibility);
+  syncCommentsVisibility();
 
   let commentDrag;
   let suppressCommentClick = false;
   commentsToggle.addEventListener("click", event => {
     if (suppressCommentClick && event.detail !== 0) return;
-    setCommentsOpen(commentsSheet.dataset.open !== "true");
+    setCommentsOpen(commentsToggle.getAttribute("aria-expanded") !== "true");
   });
   commentsToggle.addEventListener("pointerdown", event => {
     if (!event.isPrimary || event.button !== 0) return;
     suppressCommentClick = false;
-    commentDrag = { y: event.clientY, height: commentsSheet.offsetHeight };
+    commentDrag = { y: event.clientY, height: commentsSheet.dataset.open === "true" ? commentsSheet.offsetHeight : visibleDockHeight() };
     commentsToggle.setPointerCapture(event.pointerId);
   });
   commentsToggle.addEventListener("pointermove", event => {
@@ -912,7 +934,7 @@
   commentsToggle.addEventListener("pointerup", finishCommentDrag);
   commentsToggle.addEventListener("pointercancel", finishCommentDrag);
   commentsSheet.addEventListener("keydown", event => {
-    if (event.key === "Escape" && commentsSheet.dataset.open === "true") {
+    if (event.key === "Escape" && commentsToggle.getAttribute("aria-expanded") === "true") {
       commentsToggle.focus();
       setCommentsOpen(false);
     }
