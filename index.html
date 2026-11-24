@@ -371,6 +371,12 @@
     box-shadow: 0 -4px 16px rgb(11 57 100 / 18%);
     transition: height 240ms ease;
   }
+  .comments-sheet:is([data-open="true"], [data-dragging]) {
+    position: fixed;
+    inset: auto 0 0;
+    width: min(100%, 520px);
+    margin-inline: auto;
+  }
   .comments-sheet[data-open="true"] { height: var(--sheet-open-height); }
   .comments-sheet[data-dragging] { transition: none; }
   .comments-toggle {
@@ -418,8 +424,21 @@
   }
   .comments-list li { padding: 12px 0; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: transparent; display: block; }
   .comments-list li::after { content: none; }
-  .comments-list strong { color: var(--ink); font: inherit; font-weight: 700; }
-  .comments-list p { margin: 4px 0 0; color: var(--muted); line-height: 1.5; }
+  .comment-byline { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; font-size: .875rem; }
+  .comment-avatar {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: hsl(var(--avatar-hue) 75% 90%);
+    color: hsl(var(--avatar-hue) 50% 29%);
+    font-weight: 700;
+  }
+  .comment-byline strong { color: var(--ink); font: inherit; font-weight: 700; }
+  .comment-byline time, .comment-byline .comment-dot { color: var(--muted); }
+  .comments-list p { margin: 4px 0 0 35px; color: var(--ink); line-height: 1.5; overflow-wrap: anywhere; }
   @media (prefers-reduced-motion: reduce) { .comments-sheet { transition: none; } }
   footer { margin-top: 20px; color: var(--white); font-size: .8125rem; text-align: center; }
   .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
@@ -771,14 +790,45 @@
     return { author: author.replace(/：$/, ""), message: comment.textContent.slice(author.length) };
   });
   const pairingComments = [
-    { author: "山风来信", message: "想看厉娜和许飞再一起旅行。" },
-    { author: "青提气泡", message: "王子璇和文吉儿一起出发的话，我会追下一期。" },
-    { author: "雪线以北", message: "希望马天宇和张萌有机会一起回到雪山。" },
-    { author: "站台拾光", message: "在终点站重逢的话，这趟旅程就圆满了。" }
-  ];
+    [
+      ["山风来信", "想看厉娜和许飞再一起旅行。"],
+      ["耳机里的风", "我投会再见。旅途结束了，约下次见面还是挺容易的。"],
+      ["沿途停车", "想看她们交换路线，一人挑一个没去过的地方。"],
+      ["深夜听歌", "两个人安静聊天的片段就够好看，希望下次多留一点。"],
+      ["周末失联", "我更看好各奔前路。行程一忙，下次旅行就很难约了。"]
+    ],
+    [
+      ["青提气泡", "王子璇和文吉儿一起出发的话，我会追下一期。"],
+      ["车窗起雾", "我投会约定，目的地最好换成海边。"],
+      ["两份薯条", "想看她们各写一份旅行清单，到了车站才公开。"],
+      ["日落前回信", "约定不难，难的是两个人都不用改工作日程。"],
+      ["晚一点起床", "如果有续集，希望留一整天自由活动，路线她们自己定。"]
+    ],
+    [
+      ["雪线以北", "希望马天宇和张萌有机会一起回到雪山。"],
+      ["看云指南", "我投各自启程。换一座山也好，可以看到两条不同的路线。"],
+      ["海拔三千", "上次一路阴天，想看他们晴天再去一次。"],
+      ["半格电量", "能不能从山脚的早餐摊开始拍？我喜欢那种慢慢出发的感觉。"],
+      ["不带三脚架", "今天占比还挺接近，感觉这组最难猜。"]
+    ],
+    [
+      ["站台拾光", "在终点站重逢的话，这趟旅程就圆满了。"],
+      ["末班票根", "我猜会重逢，就算只留十分钟，也够在站台说几句话。"],
+      ["雨停再走", "我投会错过。要是同一天一前一后到，反而更有故事。"],
+      ["带伞的人", "如果真碰上了，想看他们在站外吃碗面再各自出发。"],
+      ["隧道过后", "比起重逢，我更好奇两个人分别会选哪一班车。"]
+    ]
+  ].map(group => group.map(([author, message]) => ({ author, message })));
+  const allComments = [...pairingComments.flat(), ...topicComments];
+  const commentTimes = new Map(allComments.map((comment, index) => [
+    comment, new Date(Date.now() - (index * 7 + 3) * 60_000)
+  ]));
+  const commentTimeFormat = new Intl.DateTimeFormat("zh-CN", {
+    timeZone: "Asia/Shanghai", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit"
+  });
   const commentGroups = [
-    { name: "全部", comments: [...pairingComments, ...topicComments] },
-    ...pairings.map((pair, index) => ({ name: pair.names.join(" × "), comments: [pairingComments[index]] }))
+    { name: "全部", comments: allComments },
+    ...pairings.map((pair, index) => ({ name: pair.names.join(" × "), comments: pairingComments[index] }))
   ];
   document.querySelector(".comments-count").textContent = `${commentGroups[0].comments.length} 条`;
 
@@ -786,13 +836,30 @@
     Array.from(commentsFilters.children).forEach((button, position) => {
       button.setAttribute("aria-pressed", String(position === index));
     });
-    const items = commentGroups[index].comments.map(({ author, message }) => {
+    const items = commentGroups[index].comments.map(comment => {
+      const { author, message } = comment;
+      const timestamp = commentTimes.get(comment);
       const item = document.createElement("li");
+      const byline = document.createElement("div");
+      byline.className = "comment-byline";
+      const avatar = document.createElement("span");
+      avatar.className = "comment-avatar";
+      avatar.setAttribute("aria-hidden", "true");
+      avatar.textContent = Array.from(author)[0];
+      avatar.style.setProperty("--avatar-hue", String(author.codePointAt(0) % 360));
       const name = document.createElement("strong");
-      const body = document.createElement("p");
       name.textContent = author;
+      const dot = document.createElement("span");
+      dot.className = "comment-dot";
+      dot.textContent = "·";
+      dot.setAttribute("aria-hidden", "true");
+      const time = document.createElement("time");
+      time.dateTime = timestamp.toISOString();
+      time.textContent = commentTimeFormat.format(timestamp);
+      byline.append(avatar, name, dot, time);
+      const body = document.createElement("p");
       body.textContent = message;
-      item.append(name, body);
+      item.append(byline, body);
       return item;
     });
     commentsList.replaceChildren(...items);
