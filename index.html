@@ -1,0 +1,1020 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="浏览哔哩哔哩预测示例，按封盘和开奖状态筛选题目。">
+<title>哔哩哔哩预测</title>
+<style>
+  :root {
+    color-scheme: light;
+    --blue: #1882cc;
+    --content-max-width: 480px;
+    --page-gutter: 20px;
+    --pink: #fb6699;
+    --ink: #172d43;
+    --muted: #4e657b;
+    --data-font-size: .8125rem;
+    --line: #dce8f2;
+    --white: #fff;
+    font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding-bottom: 16px; background: var(--blue); color: var(--ink); }
+  main {
+    display: grid;
+    grid-template-areas: "hero" "content";
+    grid-template-columns: minmax(0, 1fr);
+    max-width: calc(var(--content-max-width) + 2 * var(--page-gutter));
+    margin: 0 auto 20px;
+  }
+  header, .prediction-content {
+    width: calc(100% - 2 * var(--page-gutter));
+    margin-inline: auto;
+  }
+  header {
+    grid-area: hero;
+    align-self: start;
+    z-index: 1;
+    min-height: 66px;
+    padding-top: 10px;
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    align-items: center;
+    color: var(--white);
+  }
+  h1 { margin: 0; text-align: center; font-size: 18px; font-weight: 700; }
+  button {
+    border: 0;
+    font: inherit;
+    font-weight: 650;
+    color: var(--white);
+    background: transparent;
+    cursor: pointer;
+  }
+  .icon-button {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border-radius: 8px;
+  }
+  .icon-button svg { width: 22px; height: 22px; }
+  .prediction-content { grid-area: content; }
+  .prediction-background {
+    grid-area: hero;
+    align-self: start;
+    width: 100%;
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    aspect-ratio: 2172 / 1628;
+    max-height: 460px;
+    margin-bottom: 6px;
+    background: url("./predictions-background.jpg?v=2") center 62% / cover no-repeat;
+  }
+  .prediction-background::before,
+  .prediction-background::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: inherit;
+    pointer-events: none;
+  }
+  .prediction-background::before {
+    filter: blur(5px);
+    mask-image: linear-gradient(transparent 69%, black 94%);
+  }
+  .prediction-background::after {
+    filter: blur(16px);
+    mask-image: linear-gradient(transparent 81%, black 100%);
+  }
+  .background-fade {
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+    background: linear-gradient(transparent 77%, var(--blue) 100%);
+  }
+  .cp-module { margin-bottom: 36px; }
+  .cp-switcher { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-bottom: 18px; }
+  .cp-tab { position: relative; min-width: 0; }
+  .cp-mascot {
+    position: absolute;
+    inset: auto auto 100% 25%;
+    width: 50%;
+    aspect-ratio: 474 / 484;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .cp-mascot::before {
+    content: "";
+    display: block;
+    height: 100%;
+    background: url("./cp-mascot.png") center top / 100% auto no-repeat;
+    transform: translateY(100%);
+    transition: transform 220ms ease-in;
+  }
+  .cp-tab:has(button[aria-pressed="true"]) .cp-mascot::before {
+    transform: translateY(0);
+    transition: transform 300ms ease-out 70ms;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cp-mascot::before, .cp-tab:has(button[aria-pressed="true"]) .cp-mascot::before { transition: none; }
+  }
+  .cp-switcher button {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    min-height: 56px;
+    padding: 5px;
+    border-radius: 10px;
+    background: rgb(255 255 255 / 22%);
+    font-size: .8125rem;
+    line-height: 1.2;
+  }
+  .cp-switcher button[aria-pressed="true"] { background: var(--white); color: var(--pink); }
+  .cp-thumb {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    border-radius: 6px;
+    background: #dce8f2 url("./cp-scenes.jpg") var(--photo-x, 10%) var(--photo-y, 0%) / 266.53% 200% no-repeat;
+  }
+  .cp-tab:nth-child(even) { --photo-x: 90%; }
+  .cp-tab:nth-child(n + 3) { --photo-y: 100%; }
+  .cp-card {
+    --cp-first: #d33b78;
+    --cp-second: #1877b8;
+  }
+  .cp-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+  .cp-heading h2 { margin: 0; }
+  .cp-predict {
+    flex: none;
+    min-height: 34px;
+    width: calc((2em + 24px) * 1.2);
+    padding: 0;
+    border-radius: 17px;
+    background: var(--pink);
+    color: #fff;
+    font-size: .875rem;
+  }
+  .cp-dialog { width: min(100% - 40px, 360px); padding: 16px; border: 0; border-radius: 12px; color: var(--ink); }
+  .cp-dialog::backdrop { background: rgb(0 24 44 / 56%); }
+  .cp-dialog h2 { display: block; }
+  .cp-dialog form { display: grid; gap: 8px; }
+  .cp-dialog button { min-height: 44px; padding: 6px 12px; border-radius: 8px; background: #f0f6fb; color: var(--ink); }
+  .cp-dialog [aria-pressed="true"] { background: #fce8ef; color: #a52553; }
+  .cp-stats { display: flex; flex-wrap: wrap; gap: 21px; overflow: hidden; }
+  .cp-label {
+    position: relative;
+    display: grid;
+    flex: 1 0 auto;
+    width: max-content;
+    max-width: 100%;
+    gap: 3px;
+    font-size: var(--data-font-size);
+  }
+  /* The divider outside the current row or column is clipped by .cp-stats. */
+  .cp-label + .cp-label::before,
+  .cp-label + .cp-label::after {
+    content: "";
+    position: absolute;
+    background: #e3e6eb;
+  }
+  .cp-label + .cp-label::before { inset: 0 auto 0 -11px; width: 1px; }
+  .cp-label + .cp-label::after { inset: -11px 0 auto 0; height: 1px; }
+  .cp-label-title { display: flex; align-items: center; gap: 5px; white-space: nowrap; font-size: 1rem; font-weight: 700; }
+  .cp-label-title::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    flex: none;
+    border-radius: 50%;
+    background: var(--series-color);
+  }
+  .cp-label-detail { display: flex; flex-wrap: wrap; gap: 2px 6px; padding-inline-start: 12px; color: var(--muted); white-space: nowrap; }
+  .cp-first { --series-color: var(--cp-first); }
+  .cp-second { --series-color: var(--cp-second); }
+  .cp-plot { position: relative; margin-top: 24px; }
+  .cp-chart { display: block; width: 100%; height: auto; overflow: visible; }
+  .cp-axis { position: absolute; inset: 0; color: #707b8d; font-size: var(--data-font-size); pointer-events: none; }
+  .cp-axis-percent { position: absolute; left: 2px; top: var(--axis-position); transform: translateY(calc(-100% - 2px)); }
+  .cp-axis-dates { position: absolute; inset: auto 0 0; }
+  .cp-axis-dates span { position: absolute; bottom: 0; left: var(--date-position); transform: translateX(-50%); white-space: nowrap; }
+  .cp-grid { stroke: var(--line); stroke-dasharray: 4 5; }
+  .cp-line { fill: none; stroke: var(--series-color); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+  .cp-endpoint { fill: var(--series-color); }
+  .cp-pulse {
+    fill: none;
+    stroke: var(--series-color);
+    stroke-width: 1.8;
+    vector-effect: non-scaling-stroke;
+    opacity: 0;
+    animation: cp-endpoint-pulse 1.6s ease-out infinite;
+  }
+  .cp-pulse + .cp-pulse { animation-delay: .23s; }
+  @keyframes cp-endpoint-pulse {
+    0% { opacity: .9; transform: scale(.82); }
+    40% { opacity: .46; }
+    78%, 100% { opacity: 0; transform: scale(2.6); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cp-pulse { animation: none; }
+  }
+  .cp-label [data-direction="up"] { color: #b12c4c; }
+  .cp-label [data-direction="down"] { color: #16734e; }
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .filters button {
+    flex: 0 0 auto;
+    height: 32px;
+    padding: 0 12px;
+    border-radius: 16px;
+    background: rgb(255 255 255 / 22%);
+    font-size: .875rem;
+    white-space: nowrap;
+  }
+  .filters button[aria-pressed="true"] { background: var(--white); color: var(--pink); }
+  button:focus-visible { outline: 3px solid #ffd171; outline-offset: 2px; }
+  .notice {
+    position: fixed;
+    z-index: 3;
+    bottom: calc(72px + env(safe-area-inset-bottom));
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: calc(100% - 40px);
+    width: max-content;
+    padding: 8px 14px;
+    border-radius: 8px;
+    background: var(--ink);
+    color: var(--white);
+    font-size: .875rem;
+  }
+  .cards { display: grid; gap: 20px; }
+  article, .cp-card { border-radius: 12px; padding: 12px; background: var(--white); }
+  h2 {
+    margin: 0 0 10px;
+    font-size: 18px;
+    line-height: 1.4;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+  .details {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    margin: 0 0 12px;
+    color: var(--muted);
+    font-size: var(--data-font-size);
+    font-variant-numeric: tabular-nums;
+  }
+  .topic-badge, .status { padding: 3px 7px; border-radius: 4px; font-weight: 700; }
+  .topic-badge--hot { background: #ffe7ee; color: #a82b53; }
+  .topic-badge--new { background: #e6f6ee; color: #176347; }
+  [data-status="open"] .status { background: #e4f5ff; color: #075988; }
+  [data-status="closed"] .status { background: #edf0f4; color: #49596c; }
+  [data-status="settled"] .status { background: #fceaf1; color: #993555; }
+  ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+  li {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    padding: 8px 10px 11px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+    background: #f8fbff;
+  }
+  li::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: var(--share);
+    height: 4px;
+    background: var(--pink);
+  }
+  li strong { color: var(--pink); font-family: ui-monospace, monospace; }
+  .hot-comment {
+    position: relative;
+    margin: 12px 0 0;
+    padding: 8px 10px 8px 31px;
+    color: var(--muted);
+    font-size: var(--data-font-size);
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+  .hot-comment::before {
+    content: "“" / "";
+    position: absolute;
+    top: 8px;
+    left: 7px;
+    color: #c0ddef;
+    font: 700 2.25em/1 Georgia, serif;
+  }
+  .hot-comment strong { color: var(--ink); }
+  .option-stats {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 8px;
+  }
+  .option-stats strong { width: 4ch; text-align: right; }
+  .bet-ticker {
+    width: 5em;
+    text-align: right;
+    height: 1.4em;
+    overflow: hidden;
+    mask-image: linear-gradient(to bottom, transparent, black 18%, black 82%, transparent);
+    color: var(--muted);
+    font-size: .75rem;
+    line-height: 1.4;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .bet-ticker span { display: block; }
+  [data-live] li::after { transition: width 550ms ease; }
+  @media (prefers-reduced-motion: reduce) {
+    [data-live] li::after { transition: none; }
+  }
+  .comments-dock {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    width: min(100%, 520px);
+    height: 60px;
+    margin-inline: auto;
+  }
+  .comments-sheet {
+    --sheet-open-height: clamp(60px, 68dvh, 560px);
+    position: absolute;
+    inset: auto 0 0;
+    display: flex;
+    flex-direction: column;
+    height: 60px;
+    overflow: hidden;
+    border-radius: 16px 16px 0 0;
+    background: var(--white);
+    box-shadow: 0 -4px 16px rgb(11 57 100 / 18%);
+    transition: height 240ms ease;
+  }
+  .comments-sheet[data-open="true"] { height: var(--sheet-open-height); }
+  .comments-sheet[data-dragging] { transition: none; }
+  .comments-toggle {
+    display: flex;
+    flex: 0 0 60px;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    width: 100%;
+    padding: 10px 20px 0;
+    color: var(--ink);
+    touch-action: none;
+    cursor: grab;
+  }
+  .comments-toggle::before {
+    content: "";
+    position: absolute;
+    top: 8px;
+    left: calc(50% - 16px);
+    width: 32px;
+    height: 4px;
+    border-radius: 2px;
+    background: #cdd8e3;
+  }
+  .comments-toggle:focus-visible { outline-offset: -4px; }
+  .comments-count { color: var(--muted); font-size: .875rem; font-weight: 500; }
+  .comments-content { min-height: 0; display: flex; flex-direction: column; }
+  .comments-filters { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 20px 10px; }
+  .comments-filters button {
+    padding: 7px 10px;
+    border-radius: 14px;
+    background: #edf5fc;
+    color: var(--ink);
+    font-size: .875rem;
+  }
+  .comments-filters button[aria-pressed="true"] { color: #a52553; background: #fce8ef; }
+  .comments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    margin: 0;
+    padding: 0 20px max(12px, env(safe-area-inset-bottom));
+  }
+  .comments-list li { padding: 12px 0; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: transparent; display: block; }
+  .comments-list li::after { content: none; }
+  .comments-list strong { color: var(--ink); font: inherit; font-weight: 700; }
+  .comments-list p { margin: 4px 0 0; color: var(--muted); line-height: 1.5; }
+  @media (prefers-reduced-motion: reduce) { .comments-sheet { transition: none; } }
+  footer { margin-top: 20px; color: var(--white); font-size: .8125rem; text-align: center; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <button class="icon-button" id="back" type="button" aria-label="返回">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="m15 5-7 7 7 7"/>
+      </svg>
+    </button>
+    <h1>哔哩哔哩预测</h1>
+    <button class="icon-button" id="share" type="button" aria-label="分享">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 15V3m-4 4 4-4 4 4M7 10H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-1"/>
+      </svg>
+    </button>
+  </header>
+  <div class="prediction-background" aria-hidden="true"><div class="background-fade"></div></div>
+  <div class="prediction-content">
+    <section class="cp-module" aria-label="CP 关系预测">
+      <div class="cp-switcher" role="group" aria-label="切换 CP"></div>
+      <div class="cp-card">
+        <div class="cp-heading">
+          <h2 class="cp-question"></h2>
+          <button class="cp-predict" type="button" aria-haspopup="dialog" aria-controls="cp-dialog">预测</button>
+        </div>
+        <div class="cp-stats" role="group" aria-label="当前占比、今日新增硬币数和较昨日变化">
+          <span class="cp-label cp-first">
+            <span class="cp-label-title"></span>
+            <span class="cp-label-detail"><span class="cp-label-coins"></span><strong></strong></span>
+          </span>
+          <span class="cp-label cp-second">
+            <span class="cp-label-title"></span>
+            <span class="cp-label-detail"><span class="cp-label-coins"></span><strong></strong></span>
+          </span>
+        </div>
+        <div class="cp-plot">
+          <svg class="cp-chart" viewBox="0 0 360 120.667" role="img" aria-labelledby="cp-chart-title" aria-describedby="cp-chart-summary">
+            <title id="cp-chart-title">最近 7 天投注占比</title>
+            <desc id="cp-chart-summary"></desc>
+            <path class="cp-grid" d="M0 15.333H360 M0 57.333H360 M0 99.333H360"/>
+            <polyline class="cp-line cp-first"/>
+            <polyline class="cp-line cp-second"/>
+            <g class="cp-endpoint cp-first" aria-hidden="true">
+              <circle class="cp-pulse" r="5"/>
+              <circle class="cp-pulse" r="5"/>
+              <circle r="3.8"/>
+            </g>
+            <g class="cp-endpoint cp-second" aria-hidden="true">
+              <circle class="cp-pulse" r="5"/>
+              <circle class="cp-pulse" r="5"/>
+              <circle r="3.8"/>
+            </g>
+          </svg>
+          <div class="cp-axis" aria-hidden="true">
+            <span class="cp-axis-percent" style="--axis-position: 12.71%">100%</span>
+            <span class="cp-axis-percent" style="--axis-position: 47.51%">50%</span>
+            <span class="cp-axis-percent" style="--axis-position: 82.32%">0%</span>
+            <div class="cp-axis-dates"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <nav class="filters" aria-label="按状态筛选">
+      <button type="button" data-filter="all" aria-controls="cards" aria-pressed="true">全部</button>
+      <button type="button" data-filter="open" aria-controls="cards" aria-pressed="false">进行中</button>
+      <button type="button" data-filter="closed" aria-controls="cards" aria-pressed="false">已封盘</button>
+      <button type="button" data-filter="settled" aria-controls="cards" aria-pressed="false">已开奖</button>
+    </nav>
+    <p id="feedback" class="sr-only" role="status"></p>
+    <section id="cards" class="cards" aria-label="预测题目">
+      <article data-status="open" data-live>
+        <h2>动画新番《星海漫游》首集播放量能破百万吗？</h2>
+        <p class="details"><span class="topic-badge topic-badge--hot">热</span><span class="status">进行中</span><span>硬币奖池 12,480</span><span>封盘 <time datetime="2026-11-22T20:00:00+08:00">11-22 20:00</time></span></p>
+        <ul>
+          <li style="--share: 72%">能破百万 <span class="option-stats"><span class="bet-ticker" aria-hidden="true"></span><strong>72%</strong></span></li>
+          <li style="--share: 28%">未到百万 <span class="option-stats"><span class="bet-ticker" aria-hidden="true"></span><strong>28%</strong></span></li>
+        </ul>
+        <p class="hot-comment"><strong>追番的栗子：</strong>预告里的雪山镜头太好看了，首集我肯定来。</p>
+      </article>
+      <article data-status="open" data-live>
+        <h2>本周跨区合作视频能登上热门榜首吗？</h2>
+        <p class="details"><span class="topic-badge topic-badge--hot">热</span><span class="status">进行中</span><span>硬币奖池 6,740</span><span>封盘 <time datetime="2026-11-23T20:00:00+08:00">11-23 20:00</time></span></p>
+        <ul>
+          <li style="--share: 54%">登上榜首 <span class="option-stats"><span class="bet-ticker" aria-hidden="true"></span><strong>54%</strong></span></li>
+          <li style="--share: 46%">未到榜首 <span class="option-stats"><span class="bet-ticker" aria-hidden="true"></span><strong>46%</strong></span></li>
+        </ul>
+        <p class="hot-comment"><strong>开场三连：</strong>两个区的老观众应该都会来看。</p>
+      </article>
+      <article data-status="open">
+        <h2>周末翻唱接力会出现合唱环节吗？</h2>
+        <p class="details"><span class="topic-badge topic-badge--new">新</span><span class="status">进行中</span><span>硬币奖池 9,520</span><span>封盘 <time datetime="2026-11-25T20:00:00+08:00">11-25 20:00</time></span></p>
+        <ul>
+          <li style="--share: 68%">会有合唱 <strong>68%</strong></li>
+          <li style="--share: 32%">全程独唱 <strong>32%</strong></li>
+        </ul>
+        <p class="hot-comment"><strong>循环到天亮：</strong>上次散场大家还在合唱副歌。</p>
+      </article>
+      <article data-status="open">
+        <h2>本届手作比赛会由纸艺作品夺冠吗？</h2>
+        <p class="details"><span class="topic-badge topic-badge--new">新</span><span class="status">进行中</span><span>硬币奖池 12,300</span><span>封盘 <time datetime="2026-11-22T20:00:00+08:00">11-22 20:00</time></span></p>
+        <ul>
+          <li style="--share: 52%">纸艺夺冠 <strong>52%</strong></li>
+          <li style="--share: 48%">其他作品夺冠 <strong>48%</strong></li>
+        </ul>
+        <p class="hot-comment"><strong>裁纸要慢点：</strong>纸做的机关全部展开时我看呆了。</p>
+      </article>
+      <article data-status="open">
+        <h2>周五直播的返场曲目会是《归途》吗？</h2>
+        <p class="details"><span class="topic-badge topic-badge--new">新</span><span class="status">进行中</span><span>硬币奖池 15,080</span><span>封盘 <time datetime="2026-11-24T20:00:00+08:00">11-24 20:00</time></span></p>
+        <ul>
+          <li style="--share: 57%">会演唱《归途》 <strong>57%</strong></li>
+          <li style="--share: 43%">演唱其他曲目 <strong>43%</strong></li>
+        </ul>
+        <p class="hot-comment"><strong>耳机没电：</strong>这首的前奏一响我就能认出来。</p>
+      </article>
+      <article data-status="open">
+        <h2>《冬日漫游》新一期会出现极光吗？</h2>
+        <p class="details"><span class="topic-badge topic-badge--new">新</span><span class="status">进行中</span><span>硬币奖池 5,350</span><span>封盘 <time datetime="2026-11-22T20:00:00+08:00">11-22 20:00</time></span></p>
+        <ul>
+          <li style="--share: 61%">会看到极光 <strong>61%</strong></li>
+          <li style="--share: 39%">不会出现 <strong>39%</strong></li>
+        </ul>
+        <p class="hot-comment"><strong>瓶装星光：</strong>预告里有个镜头，天边已经泛绿了。</p>
+      </article>
+      <article data-status="open">
+        <h2>独立游戏试玩版会开放双人模式吗？</h2>
+        <p class="details"><span class="topic-badge topic-badge--new">新</span><span class="status">进行中</span><span>硬币奖池 8,130</span><span>封盘 <time datetime="2026-11-24T20:00:00+08:00">11-24 20:00</time></span></p>
+        <ul>
+          <li style="--share: 38%">开放双人 <strong>38%</strong></li>
+          <li style="--share: 62%">仅支持单人 <strong>62%</strong></li>
+        </ul>
+        <p class="hot-comment"><strong>存档位二：</strong>如果能双人，我现在就去喊队友。</p>
+      </article>
+      <article data-status="open">
+        <h2>美食区新企划的第一站会选成都吗？</h2>
+        <p class="details"><span class="topic-badge topic-badge--new">新</span><span class="status">进行中</span><span>硬币奖池 10,910</span><span>封盘 <time datetime="2026-11-26T20:00:00+08:00">11-26 20:00</time></span></p>
+        <ul>
+          <li style="--share: 45%">第一站成都 <strong>45%</strong></li>
+          <li style="--share: 55%">前往其他城市 <strong>55%</strong></li>
+        </ul>
+        <p class="hot-comment"><strong>巷口有香气：</strong>上条动态里的碗看着很眼熟。</p>
+      </article>
+      <article data-status="open">
+        <h2>校园短片会公开幕后花絮吗？</h2>
+        <p class="details"><span class="topic-badge topic-badge--new">新</span><span class="status">进行中</span><span>硬币奖池 13,690</span><span>封盘 <time datetime="2026-11-23T20:00:00+08:00">11-23 20:00</time></span></p>
+        <ul>
+          <li style="--share: 73%">会公开 <strong>73%</strong></li>
+          <li style="--share: 27%">暂不公开 <strong>27%</strong></li>
+        </ul>
+        <p class="hot-comment"><strong>镜头外的人：</strong>想看雨天那场是怎么拍出来的。</p>
+      </article>
+      <article data-status="open">
+        <h2>城市骑行挑战能在日落前完成吗？</h2>
+        <p class="details"><span class="topic-badge topic-badge--new">新</span><span class="status">进行中</span><span>硬币奖池 6,170</span><span>封盘 <time datetime="2026-11-25T20:00:00+08:00">11-25 20:00</time></span></p>
+        <ul>
+          <li style="--share: 63%">日落前完成 <strong>63%</strong></li>
+          <li style="--share: 37%">日落后完成 <strong>37%</strong></li>
+        </ul>
+        <p class="hot-comment"><strong>沿河慢骑：</strong>最后那段坡才是真正的考验。</p>
+      </article>
+      <article data-status="closed">
+        <h2>周末电竞邀请赛决赛会打满五局吗？</h2>
+        <p class="details"><span class="status">已封盘</span><span>硬币奖池 8,560</span><span>封盘 <time datetime="2026-11-18T19:30:00+08:00">11-18 19:30</time></span></p>
+        <ul>
+          <li style="--share: 43%">打满五局 <strong>43%</strong></li>
+          <li style="--share: 57%">四局内结束 <strong>57%</strong></li>
+        </ul>
+        <p class="hot-comment"><strong>决胜局等我：</strong>这两队最近都打得很稳，五局也不奇怪。</p>
+      </article>
+      <article data-status="closed">
+        <h2>纪录短片会以海边灯塔作为结尾吗？</h2>
+        <p class="details"><span class="status">已封盘</span><span>硬币奖池 7,560</span><span>封盘 <time datetime="2026-11-17T20:00:00+08:00">11-17 20:00</time></span></p>
+        <ul>
+          <li style="--share: 47%">灯塔结尾 <strong>47%</strong></li>
+          <li style="--share: 53%">其他结尾 <strong>53%</strong></li>
+        </ul>
+        <p class="hot-comment"><strong>潮声收藏家：</strong>灯塔已经在开头出现过一次了。</p>
+      </article>
+      <article data-status="closed">
+        <h2>科技体验直播会完整演示折叠屏吗？</h2>
+        <p class="details"><span class="status">已封盘</span><span>硬币奖池 8,950</span><span>封盘 <time datetime="2026-11-18T20:00:00+08:00">11-18 20:00</time></span></p>
+        <ul>
+          <li style="--share: 56%">完整演示 <strong>56%</strong></li>
+          <li style="--share: 44%">仅简单介绍 <strong>44%</strong></li>
+        </ul>
+        <p class="hot-comment"><strong>拆机笔记：</strong>我最想看外屏和内屏怎么接续。</p>
+      </article>
+      <article data-status="closed">
+        <h2>本期校园辩论赛会进入加赛吗？</h2>
+        <p class="details"><span class="status">已封盘</span><span>硬币奖池 10,340</span><span>封盘 <time datetime="2026-11-17T20:00:00+08:00">11-17 20:00</time></span></p>
+        <ul>
+          <li style="--share: 42%">进入加赛 <strong>42%</strong></li>
+          <li style="--share: 58%">常规环节结束 <strong>58%</strong></li>
+        </ul>
+        <p class="hot-comment"><strong>举牌别太快：</strong>两边开篇都挺精彩，后面有得看。</p>
+      </article>
+      <article data-status="closed">
+        <h2>旅行挑战的最后一站会搭乘夜班列车吗？</h2>
+        <p class="details"><span class="status">已封盘</span><span>硬币奖池 11,730</span><span>封盘 <time datetime="2026-11-18T20:00:00+08:00">11-18 20:00</time></span></p>
+        <ul>
+          <li style="--share: 65%">搭夜班列车 <strong>65%</strong></li>
+          <li style="--share: 35%">选择其他交通 <strong>35%</strong></li>
+        </ul>
+        <p class="hot-comment"><strong>靠窗第七排：</strong>最后一站如果坐火车也太应景了。</p>
+      </article>
+      <article data-status="settled">
+        <h2>本期创作挑战的冠军作品来自哪个分区？</h2>
+        <p class="details"><span class="status">已开奖</span><span>硬币奖池 6,240</span><span>封盘 <time datetime="2026-11-16T18:00:00+08:00">11-16 18:00</time></span></p>
+        <ul>
+          <li style="--share: 64%">动画区 · 获胜 <strong>64%</strong></li>
+          <li style="--share: 36%">其他分区 <strong>36%</strong></li>
+        </ul>
+        <p class="hot-comment"><strong>帧帧存档：</strong>动画区那支作品的转场我反复看了三遍。</p>
+      </article>
+      <article data-status="settled">
+        <h2>主题摄影赛的获奖作品是黑白照片吗？</h2>
+        <p class="details"><span class="status">已开奖</span><span>硬币奖池 13,120</span><span>封盘 <time datetime="2026-11-15T20:00:00+08:00">11-15 20:00</time></span></p>
+        <ul>
+          <li style="--share: 59%">是黑白照片 · 获胜 <strong>59%</strong></li>
+          <li style="--share: 41%">是彩色照片 <strong>41%</strong></li>
+        </ul>
+        <p class="hot-comment"><strong>取景框之外：</strong>没有颜色，反而更容易注意到光。</p>
+      </article>
+      <article data-status="settled">
+        <h2>本月科普视频哪类题材拿到第一？</h2>
+        <p class="details"><span class="status">已开奖</span><span>硬币奖池 14,510</span><span>封盘 <time datetime="2026-11-14T20:00:00+08:00">11-14 20:00</time></span></p>
+        <ul>
+          <li style="--share: 62%">天文观测 · 获胜 <strong>62%</strong></li>
+          <li style="--share: 38%">自然地理 <strong>38%</strong></li>
+        </ul>
+        <p class="hot-comment"><strong>木星旁边：</strong>第一次看懂行星冲日是什么。</p>
+      </article>
+      <article data-status="settled">
+        <h2>配音挑战的冠军会选择双人剧本吗？</h2>
+        <p class="details"><span class="status">已开奖</span><span>硬币奖池 5,600</span><span>封盘 <time datetime="2026-11-16T20:00:00+08:00">11-16 20:00</time></span></p>
+        <ul>
+          <li style="--share: 51%">选择双人剧本 · 获胜 <strong>51%</strong></li>
+          <li style="--share: 49%">选择单人剧本 <strong>49%</strong></li>
+        </ul>
+        <p class="hot-comment"><strong>对白对上了：</strong>那段一人接一句，听着特别自然。</p>
+      </article>
+      <article data-status="settled">
+        <h2>复古游戏挑战是否在三次内通关？</h2>
+        <p class="details"><span class="status">已开奖</span><span>硬币奖池 6,990</span><span>封盘 <time datetime="2026-11-15T20:00:00+08:00">11-15 20:00</time></span></p>
+        <ul>
+          <li style="--share: 66%">三次内通关 · 获胜 <strong>66%</strong></li>
+          <li style="--share: 34%">超过三次 <strong>34%</strong></li>
+        </ul>
+        <p class="hot-comment"><strong>手柄向左：</strong>第二次卡在门口的时候我急坏了。</p>
+      </article>
+    </section>
+    <footer>人物、题目、评论与数据仅供演示 · 封盘时间为北京时间</footer>
+  </div>
+</main>
+<section class="comments-dock" aria-label="热议评论">
+  <div class="comments-sheet" data-open="false">
+    <button class="comments-toggle" type="button" aria-expanded="false" aria-controls="comments-content">
+      <span>热议评论</span><span class="comments-count"></span>
+    </button>
+    <div class="comments-content" id="comments-content" inert>
+      <div class="comments-filters" role="group" aria-label="筛选评论"></div>
+      <ul class="comments-list" aria-label="评论列表"></ul>
+    </div>
+  </div>
+</section>
+<dialog class="cp-dialog" id="cp-dialog" aria-labelledby="cp-dialog-title">
+  <h2 id="cp-dialog-title"></h2>
+  <form method="dialog">
+    <button type="button" class="cp-choice"></button>
+    <button type="button" class="cp-choice"></button>
+    <button type="submit">取消</button>
+  </form>
+</dialog>
+<div class="notice" id="notice" role="status" hidden></div>
+<script>
+  const notice = document.querySelector("#notice");
+  let noticeTimer;
+
+  function showNotice(message) {
+    clearTimeout(noticeTimer);
+    notice.hidden = false;
+    notice.textContent = message;
+    noticeTimer = setTimeout(() => { notice.hidden = true; }, 2600);
+  }
+
+  document.querySelector("#back").addEventListener("click", () => {
+    if (history.length > 1) {
+      history.back();
+      return;
+    }
+    showNotice("没有上一页");
+  });
+
+  document.querySelector("#share").addEventListener("click", async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: document.title, url: location.href });
+        return;
+      }
+    } catch (error) {
+      if (error.name === "AbortError") return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(location.href);
+      showNotice("链接已复制");
+    } catch {
+      window.prompt("复制分享链接", location.href);
+    }
+  });
+
+  const buttons = document.querySelectorAll("[data-filter]");
+  const cards = document.querySelectorAll("#cards article");
+  const feedback = document.querySelector("#feedback");
+
+  for (const button of buttons) {
+    button.addEventListener("click", () => {
+      const filter = button.dataset.filter;
+      let visible = 0;
+      for (const option of buttons) {
+        option.setAttribute("aria-pressed", String(option === button));
+      }
+      for (const card of cards) {
+        const matches = filter === "all" || card.dataset.status === filter;
+        card.hidden = !matches;
+        if (matches) visible += 1;
+      }
+      feedback.textContent = `${button.textContent}，共 ${visible} 道预测题目`;
+    });
+  }
+
+  const pairings = [
+    { names: ["厉娜", "许飞"], question: "旅程结束后，厉娜和许飞还会再见吗？", choices: ["会再见", "各奔前路"], dailyShares: [54, 59, 56, 67, 72, 70, 81], pool: 12400 },
+    { names: ["王子璇", "文吉儿"], question: "王子璇和文吉儿会约定下一次旅行吗？", choices: ["会约定", "暂时不会"], dailyShares: [57, 53, 48, 45, 38, 31, 23], pool: 9800 },
+    { names: ["马天宇", "张萌"], question: "马天宇和张萌会一起回到雪山吗？", choices: ["会一起回去", "各自启程"], dailyShares: [44, 52, 47, 55, 49, 56, 51], pool: 8600 },
+    { names: ["白小纯", "青稚"], question: "白小纯和青稚会在终点站重逢吗？", choices: ["会重逢", "会错过"], dailyShares: [37, 41, 48, 54, 62, 58, 68], pool: 11200 }
+  ];
+  const commentsSheet = document.querySelector(".comments-sheet");
+  const commentsToggle = document.querySelector(".comments-toggle");
+  const commentsContent = document.querySelector(".comments-content");
+  const commentsList = document.querySelector(".comments-list");
+  const commentsFilters = document.querySelector(".comments-filters");
+  const topicComments = Array.from(document.querySelectorAll(".hot-comment"), comment => {
+    const author = comment.querySelector("strong").textContent;
+    return { author: author.replace(/：$/, ""), message: comment.textContent.slice(author.length) };
+  });
+  const pairingComments = [
+    { author: "山风来信", message: "想看厉娜和许飞再一起旅行。" },
+    { author: "青提气泡", message: "王子璇和文吉儿一起出发的话，我会追下一期。" },
+    { author: "雪线以北", message: "希望马天宇和张萌有机会一起回到雪山。" },
+    { author: "站台拾光", message: "在终点站重逢的话，这趟旅程就圆满了。" }
+  ];
+  const commentGroups = [
+    { name: "全部", comments: [...pairingComments, ...topicComments] },
+    ...pairings.map((pair, index) => ({ name: pair.names.join(" × "), comments: [pairingComments[index]] }))
+  ];
+  document.querySelector(".comments-count").textContent = `${commentGroups[0].comments.length} 条`;
+
+  function showComments(index) {
+    Array.from(commentsFilters.children).forEach((button, position) => {
+      button.setAttribute("aria-pressed", String(position === index));
+    });
+    const items = commentGroups[index].comments.map(({ author, message }) => {
+      const item = document.createElement("li");
+      const name = document.createElement("strong");
+      const body = document.createElement("p");
+      name.textContent = author;
+      body.textContent = message;
+      item.append(name, body);
+      return item;
+    });
+    commentsList.replaceChildren(...items);
+    commentsList.scrollTop = 0;
+  }
+
+  commentGroups.forEach((group, index) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = group.name;
+    button.addEventListener("click", () => showComments(index));
+    commentsFilters.append(button);
+  });
+  showComments(0);
+
+  function setCommentsOpen(open) {
+    commentsSheet.dataset.open = String(open);
+    commentsToggle.setAttribute("aria-expanded", String(open));
+    commentsContent.inert = !open;
+  }
+
+  let commentDrag;
+  let suppressCommentClick = false;
+  commentsToggle.addEventListener("click", event => {
+    if (suppressCommentClick && event.detail !== 0) return;
+    setCommentsOpen(commentsSheet.dataset.open !== "true");
+  });
+  commentsToggle.addEventListener("pointerdown", event => {
+    if (!event.isPrimary || event.button !== 0) return;
+    suppressCommentClick = false;
+    commentDrag = { y: event.clientY, height: commentsSheet.offsetHeight };
+    commentsToggle.setPointerCapture(event.pointerId);
+  });
+  commentsToggle.addEventListener("pointermove", event => {
+    if (!commentDrag || !event.isPrimary) return;
+    const movement = commentDrag.y - event.clientY;
+    if (Math.abs(movement) < 6 && !suppressCommentClick) return;
+    suppressCommentClick = true;
+    commentsSheet.dataset.dragging = "";
+    commentsSheet.style.height = `clamp(60px, ${commentDrag.height + movement}px, var(--sheet-open-height))`;
+  });
+  function finishCommentDrag(event) {
+    if (!commentDrag || !event.isPrimary) return;
+    const movement = commentDrag.y - event.clientY;
+    if (event.type === "pointerup" && Math.abs(movement) >= 24) setCommentsOpen(movement > 0);
+    commentDrag = undefined;
+    delete commentsSheet.dataset.dragging;
+    commentsSheet.style.removeProperty("height");
+  }
+  commentsToggle.addEventListener("pointerup", finishCommentDrag);
+  commentsToggle.addEventListener("pointercancel", finishCommentDrag);
+  commentsSheet.addEventListener("keydown", event => {
+    if (event.key === "Escape" && commentsSheet.dataset.open === "true") {
+      commentsToggle.focus();
+      setCommentsOpen(false);
+    }
+  });
+
+  const cpSwitcher = document.querySelector(".cp-switcher");
+  const cpQuestion = document.querySelector(".cp-question");
+  const cpPredict = document.querySelector(".cp-predict");
+  const cpDialog = document.querySelector("#cp-dialog");
+  const cpDialogTitle = document.querySelector("#cp-dialog-title");
+  const cpChoices = cpDialog.querySelectorAll(".cp-choice");
+  const cpVotes = new Map();
+  let activePairing = 0;
+
+  cpPredict.addEventListener("click", () => {
+    const pair = pairings[activePairing];
+    cpDialogTitle.textContent = pair.question;
+    cpChoices.forEach((choice, index) => {
+      choice.textContent = pair.choices[index];
+      choice.setAttribute("aria-pressed", String(cpVotes.get(activePairing) === index));
+    });
+    cpDialog.showModal();
+  });
+
+  cpChoices.forEach((choice, index) => {
+    choice.addEventListener("click", () => {
+      cpVotes.set(activePairing, index);
+      cpDialog.close();
+      showNotice(`已记录演示预测：${choice.textContent}`);
+    });
+  });
+
+  const cpLabels = document.querySelectorAll(".cp-label");
+  const cpChartSummary = document.querySelector("#cp-chart-summary");
+  const coinFormat = new Intl.NumberFormat("zh-CN");
+  const dateFormat = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Shanghai", month: "numeric", day: "numeric"
+  });
+  const cpLines = document.querySelectorAll(".cp-line");
+  const cpEndpoints = document.querySelectorAll(".cp-endpoint");
+  const cpChartTitle = document.querySelector("#cp-chart-title");
+  const cpButtons = pairings.map((pair, index) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    const thumbnail = document.createElement("span");
+    thumbnail.className = "cp-thumb";
+    thumbnail.setAttribute("aria-hidden", "true");
+    button.append(thumbnail, pair.names.join(" & "));
+    button.addEventListener("click", () => showPairing(index));
+    const tab = document.createElement("div");
+    tab.className = "cp-tab";
+    const mascot = document.createElement("span");
+    mascot.className = "cp-mascot";
+    mascot.setAttribute("aria-hidden", "true");
+    tab.append(mascot, button);
+    cpSwitcher.append(tab);
+    return button;
+  });
+
+  function showPairing(index) {
+    activePairing = index;
+    const pair = pairings[index];
+    cpButtons.forEach((button, position) => button.setAttribute("aria-pressed", String(index === position)));
+    cpQuestion.textContent = pair.question;
+    const samples = pair.dailyShares;
+    const series = [samples, samples.map(value => 100 - value)];
+    const dailyPoolFactors = [.79, .91, .84, .96, .88, 1, 1];
+    const today = Date.now();
+
+    cpChartTitle.textContent = `${pair.names.join("与")}最近 7 天投注占比`;
+    const datePositions = samples.map((_, index) => 54 + 282 * index / (samples.length - 1));
+    document.querySelectorAll(".cp-axis-dates span").forEach((label, index) => {
+      label.style.setProperty("--date-position", `${datePositions[index] / 360 * 100}%`);
+      label.textContent = dateFormat.format(today - (6 - index) * 86400000);
+    });
+
+    const summaries = series.map((values, position) => {
+      const dailyCoins = values.map((share, index) => Math.round(pair.pool * dailyPoolFactors[index] * share / 100));
+      const points = values.map((share, index) => `${datePositions[index]},${99.333 - 84 * share / 100}`);
+      cpLines[position].setAttribute("points", points.join(" "));
+      cpEndpoints[position].setAttribute("transform", `translate(${points.at(-1)})`);
+
+      const label = cpLabels[position];
+      const todayCoins = dailyCoins.at(-1);
+      const yesterdayCoins = dailyCoins.at(-2);
+      const change = (todayCoins - yesterdayCoins) * 100 / yesterdayCoins;
+      const direction = change > 0 ? "up" : change < 0 ? "down" : "flat";
+      const amount = `${coinFormat.format(Math.abs(change).toFixed(1))}%`;
+      const trend = { up: `▲ +${amount}`, down: `▼ −${amount}`, flat: "0%" }[direction];
+      const title = `${pair.choices[position]} ${values.at(-1)}%`;
+      const coins = `今日新增 ${coinFormat.format(todayCoins)} 硬币`;
+
+      label.querySelector(".cp-label-title").textContent = title;
+      label.querySelector(".cp-label-coins").textContent = coins;
+      const delta = label.querySelector("strong");
+      delta.dataset.direction = direction;
+      delta.textContent = `较昨日 ${trend}`;
+      return `${title}，${coins}，${delta.textContent}`;
+    });
+    cpChartSummary.textContent = summaries.join("；");
+  }
+
+  showPairing(0);
+
+  const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+  const livePredictions = Array.from(document.querySelectorAll('article[data-live]'), card => ({
+    card,
+    options: Array.from(card.querySelectorAll("li"), row => ({
+      row,
+      ticker: row.querySelector(".bet-ticker"),
+      percentage: row.querySelector("strong")
+    }))
+  }));
+
+  function rollDemoBet(card, option, current) {
+    const duration = 800 + Math.random() * 200;
+
+    if (card.hidden) {
+      setTimeout(() => rollDemoBet(card, option, current), duration);
+      return;
+    }
+
+    const amount = 100 + Math.floor(Math.random() * 900);
+    const message = document.createElement("span");
+    message.textContent = `+${amount}硬币`;
+    const next = () => rollDemoBet(card, option, message);
+
+    if (!current || reducedMotion.matches) {
+      option.ticker.replaceChildren(message);
+      setTimeout(next, current ? duration : 0);
+      return;
+    }
+
+    const track = document.createElement("span");
+    track.append(current, message);
+    option.ticker.replaceChildren(track);
+    const animation = track.animate([
+      { transform: "translateY(0)", offset: 0 },
+      { transform: "translateY(0)", offset: .42, easing: "ease-in-out" },
+      { transform: "translateY(-50%)", offset: 1 }
+    ], { duration, fill: "forwards" });
+    animation.onfinish = next;
+  }
+
+  function refreshLivePercentages() {
+    for (const { options } of livePredictions) {
+      const [first, second] = options;
+      const current = parseInt(first.percentage.textContent, 10);
+      const swing = 8 + Math.floor(Math.random() * 9);
+      let direction = Math.random() < .5 ? -1 : 1;
+      const target = current + direction * swing;
+
+      if (target < 15 || target > 85) direction *= -1;
+      const next = current + direction * swing;
+
+      for (const [option, percentage] of [[first, next], [second, 100 - next]]) {
+        const share = `${percentage}%`;
+        option.percentage.textContent = share;
+        option.row.style.setProperty("--share", share);
+      }
+    }
+  }
+
+  if (livePredictions.length) {
+    for (const { card, options } of livePredictions) {
+      for (const option of options) rollDemoBet(card, option);
+    }
+    setInterval(refreshLivePercentages, 5000);
+  }
+</script>
+</body>
+</html>
