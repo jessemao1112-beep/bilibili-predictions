@@ -28,22 +28,10 @@
     max-width: calc(var(--content-max-width) + 2 * var(--page-gutter));
     margin: 0 auto 20px;
   }
-  header, .prediction-content {
+  .prediction-content {
     width: calc(100% - 2 * var(--page-gutter));
     margin-inline: auto;
   }
-  header {
-    grid-area: hero;
-    align-self: start;
-    z-index: 1;
-    min-height: 66px;
-    padding-top: 10px;
-    display: grid;
-    grid-template-columns: 44px minmax(0, 1fr) 44px;
-    align-items: center;
-    color: var(--white);
-  }
-  h1 { margin: 0; text-align: center; font-size: 18px; font-weight: 700; }
   button {
     border: 0;
     font: inherit;
@@ -52,15 +40,6 @@
     background: transparent;
     cursor: pointer;
   }
-  .icon-button {
-    display: grid;
-    place-items: center;
-    width: 44px;
-    height: 44px;
-    padding: 0;
-    border-radius: 8px;
-  }
-  .icon-button svg { width: 22px; height: 22px; }
   .prediction-content { grid-area: content; }
   .prediction-background {
     grid-area: hero;
@@ -97,16 +76,7 @@
     background: linear-gradient(transparent 77%, var(--blue) 100%);
   }
   .cp-module { margin-bottom: 36px; }
-  .cp-switcher.filters {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    scrollbar-width: none;
-    padding-block: 3px;
-    margin-bottom: 12px;
-    mask-image: linear-gradient(to right, transparent, black var(--fade-start, 0px), black calc(100% - var(--fade-end, 0px)), transparent);
-  }
-  .cp-switcher[data-more-left] { --fade-start: 16px; }
-  .cp-switcher[data-more-right] { --fade-end: 16px; }
+  .cp-switcher.filters { margin-bottom: 12px; }
   .cp-card {
     --cp-first: #d33b78;
     --cp-second: #1877b8;
@@ -136,6 +106,7 @@
     font-size: .875rem;
     border-radius: 8px 0 0 8px;
     clip-path: polygon(0 0, 100% 0, calc(100% - 14px) 100%, 0 100%);
+    clip-path: shape(from 0 0, line to calc(100% - 5px) 0, curve to calc(100% - 1px) 5px with 100% 0, line to calc(100% - 13px) calc(100% - 4px), curve to calc(100% - 18px) 100% with calc(100% - 14px) 100%, line to 0 100%, close);
   }
   .cp-choice + .cp-choice {
     margin-inline-start: -4px;
@@ -143,6 +114,7 @@
     color: #fff;
     border-radius: 0 8px 8px 0;
     clip-path: polygon(14px 0, 100% 0, 100% 100%, 0 100%);
+    clip-path: shape(from 18px 0, line to 100% 0, line to 100% 100%, line to 5px 100%, curve to 1px calc(100% - 5px) with 0 100%, line to 13px 4px, curve to 18px 0 with 14px 0, close);
   }
   .cp-choice[aria-pressed="true"] .cp-choice-name { text-decoration: underline; text-underline-offset: 3px; }
   .cp-choice:focus-visible { outline-offset: -5px; }
@@ -162,6 +134,8 @@
   .cp-plot-heading h3 { margin: 0; font-size: .9375rem; }
   .cp-plot-shares { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-inline-start: auto; font-size: .75rem; }
   .cp-plot-shares span { color: var(--series-color); white-space: nowrap; }
+  .cp-plot-shares b { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .cp-chart[data-pending] :is(.cp-line, .cp-endpoint) { visibility: hidden; }
   .cp-comment-window {
     --cp-comment-height: 30px;
     height: calc(var(--cp-comment-height) * 2);
@@ -178,7 +152,7 @@
   .cp-second { --series-color: var(--cp-second); }
   .cp-plot { position: relative; }
   .cp-chart { display: block; width: 100%; height: auto; overflow: visible; }
-  .cp-axis { position: absolute; inset: 0; color: #707b8d; font-size: var(--data-font-size); pointer-events: none; }
+  .cp-axis { position: absolute; inset: 0; color: rgb(112 123 141 / 50%); font-size: var(--data-font-size); pointer-events: none; }
   .cp-axis-percent { position: absolute; left: 2px; top: var(--axis-position); transform: translateY(calc(-100% - 2px)); }
   .cp-axis-dates { position: absolute; inset: auto 0 0; }
   .cp-axis-dates span { position: absolute; bottom: 0; left: var(--date-position); transform: translateX(-50%); white-space: nowrap; }
@@ -422,20 +396,7 @@
 </style>
 </head>
 <body>
-<main>
-  <header>
-    <button class="icon-button" id="back" type="button" aria-label="返回">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="m15 5-7 7 7 7"/>
-      </svg>
-    </button>
-    <h1>哔哩哔哩预测</h1>
-    <button class="icon-button" id="share" type="button" aria-label="分享">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M12 15V3m-4 4 4-4 4 4M7 10H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-1"/>
-      </svg>
-    </button>
-  </header>
+<main aria-label="哔哩哔哩预测">
   <div class="prediction-background" aria-hidden="true"><div class="background-fade"></div></div>
   <div class="prediction-content">
     <section class="cp-module" aria-label="CP 关系预测">
@@ -454,10 +415,10 @@
           <div class="cp-plot-shares"><span class="cp-first"></span><span class="cp-second"></span></div>
         </div>
         <div class="cp-plot">
-          <svg class="cp-chart" viewBox="0 0 360 120.667" role="img" aria-labelledby="cp-chart-title" aria-describedby="cp-chart-summary">
+          <svg class="cp-chart" viewBox="0 0 360 92.667" role="img" aria-labelledby="cp-chart-title" aria-describedby="cp-chart-summary">
             <title id="cp-chart-title">最近 7 天投注占比</title>
             <desc id="cp-chart-summary"></desc>
-            <path class="cp-grid" d="M0 15.333H360 M0 57.333H360 M0 99.333H360"/>
+            <path class="cp-grid" d="M0 15.333H360 M0 43.333H360 M0 71.333H360"/>
             <polyline class="cp-line cp-first"/>
             <polyline class="cp-line cp-second"/>
             <g class="cp-endpoint cp-first" aria-hidden="true">
@@ -472,9 +433,9 @@
             </g>
           </svg>
           <div class="cp-axis" aria-hidden="true">
-            <span class="cp-axis-percent" style="--axis-position: 12.71%">100%</span>
-            <span class="cp-axis-percent" style="--axis-position: 47.51%">50%</span>
-            <span class="cp-axis-percent" style="--axis-position: 82.32%">0%</span>
+            <span class="cp-axis-percent" style="--axis-position: 16.55%">100%</span>
+            <span class="cp-axis-percent" style="--axis-position: 46.76%">50%</span>
+            <span class="cp-axis-percent" style="--axis-position: 76.98%">0%</span>
             <div class="cp-axis-dates"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
           </div>
         </div>
@@ -698,32 +659,6 @@
     noticeTimer = setTimeout(() => { notice.hidden = true; }, 2600);
   }
 
-  document.querySelector("#back").addEventListener("click", () => {
-    if (history.length > 1) {
-      history.back();
-      return;
-    }
-    showNotice("没有上一页");
-  });
-
-  document.querySelector("#share").addEventListener("click", async () => {
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: document.title, url: location.href });
-        return;
-      }
-    } catch (error) {
-      if (error.name === "AbortError") return;
-    }
-
-    try {
-      await navigator.clipboard.writeText(location.href);
-      showNotice("链接已复制");
-    } catch {
-      window.prompt("复制分享链接", location.href);
-    }
-  });
-
   const buttons = document.querySelectorAll("[data-filter]");
   const cards = document.querySelectorAll("#cards article");
   const feedback = document.querySelector("#feedback");
@@ -923,15 +858,8 @@
   const cpCommentTrack = document.querySelector(".cp-comment-track");
   const cpVotes = new Map();
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
-  let activePairing = 0;
+  let activePairing;
   let cpCommentAnimation;
-
-  function updateCpFilterEdges() {
-    cpSwitcher.toggleAttribute("data-more-left", cpSwitcher.scrollLeft > 1);
-    cpSwitcher.toggleAttribute("data-more-right", cpSwitcher.scrollLeft + cpSwitcher.clientWidth < cpSwitcher.scrollWidth - 1);
-  }
-  cpSwitcher.addEventListener("scroll", updateCpFilterEdges, { passive: true });
-  new ResizeObserver(updateCpFilterEdges).observe(cpSwitcher);
 
   function updateCpCoins(pool, roll) {
     const share = pairings[activePairing].dailyShares.at(-1);
@@ -1032,6 +960,35 @@
   const cpLines = document.querySelectorAll(".cp-line");
   const cpEndpoints = document.querySelectorAll(".cp-endpoint");
   const cpChartTitle = document.querySelector("#cp-chart-title");
+  const cpChart = document.querySelector(".cp-chart");
+  let chartIsVisible = false;
+  let chartAnimations = [];
+
+  function playCpChartEntrance() {
+    if (!chartIsVisible || !cpChart.hasAttribute("data-pending")) return;
+    cpChart.removeAttribute("data-pending");
+    if (reducedMotion.matches) return;
+
+    chartAnimations = [...cpLines].map(line => {
+      const length = line.getTotalLength();
+      const dash = `${length} ${length}`;
+      return line.animate([
+        { strokeDasharray: dash, strokeDashoffset: length },
+        { strokeDasharray: dash, strokeDashoffset: 0 }
+      ], { duration: 850, easing: "ease-out" });
+    });
+    chartAnimations.push(...Array.from(cpEndpoints, point => point.animate([
+      { opacity: 0, offset: 0 },
+      { opacity: 0, offset: .83 },
+      { opacity: 1, offset: 1 }
+    ], { duration: 850 })));
+  }
+
+  new IntersectionObserver(([entry]) => {
+    chartIsVisible = entry.isIntersecting;
+    playCpChartEntrance();
+  }).observe(cpChart);
+
   const cpButtons = pairings.map((pair, index) => {
     const button = document.createElement("button");
     button.type = "button";
@@ -1042,7 +999,11 @@
   });
 
   function showPairing(index) {
+    if (index === activePairing) return;
+    chartAnimations.forEach(animation => animation.cancel());
+    chartAnimations = [];
     activePairing = index;
+    cpChart.toggleAttribute("data-pending", !reducedMotion.matches);
     const pair = pairings[index];
     cpButtons.forEach((button, position) => button.setAttribute("aria-pressed", String(index === position)));
     cpQuestion.textContent = pair.question;
@@ -1060,7 +1021,7 @@
     });
 
     const summaries = series.map((values, position) => {
-      const points = values.map((share, index) => `${datePositions[index]},${99.333 - 84 * share / 100}`);
+      const points = values.map((share, index) => `${datePositions[index]},${71.333 - 56 * share / 100}`);
       cpLines[position].setAttribute("points", points.join(" "));
       cpEndpoints[position].setAttribute("transform", `translate(${points.at(-1)})`);
 
@@ -1069,15 +1030,17 @@
       const coins = coinFormat.format(Math.round(pair.pool * share / 100));
       cpChoices[position].querySelector(".cp-choice-name").textContent = option;
       cpChoices[position].setAttribute("aria-pressed", String(cpVotes.get(index) === position));
-      cpShares[position].textContent = `${option} ${share}%`;
+      const percentage = document.createElement("b");
+      percentage.textContent = `${share}%`;
+      cpShares[position].replaceChildren(`${option} `, percentage);
       return `${option} ${share}%，${coins} 硬币`;
     });
     cpChartSummary.textContent = summaries.join("；");
     showPairingComments(index);
+    playCpChartEntrance();
   }
 
   showPairing(0);
-  updateCpFilterEdges();
   scheduleCpCoins();
   const livePredictions = Array.from(document.querySelectorAll('article[data-live]'), card => ({
     card,
