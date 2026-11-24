@@ -78,7 +78,7 @@
   .cp-module { margin-bottom: 36px; }
   .cp-switcher.filters { margin-bottom: 12px; }
   .cp-card {
-    --cp-first: #d33b78;
+    --cp-first: var(--pink);
     --cp-second: #1877b8;
   }
   .cp-question-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
@@ -129,17 +129,17 @@
     align-items: baseline;
     justify-content: space-between;
     gap: 4px 10px;
-    margin: 16px 0 12px;
+    margin: 22px 0 6px;
   }
   .cp-plot-heading h3 { margin: 0; font-size: .9375rem; }
-  .cp-plot-shares { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-inline-start: auto; font-size: .75rem; }
+  .cp-plot-shares { display: flex; flex: 0 0 auto; flex-wrap: wrap; max-width: 100%; gap: 4px 10px; font-size: .75rem; }
   .cp-plot-shares span { color: var(--series-color); white-space: nowrap; }
   .cp-plot-shares b { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
   .cp-plot[data-pending] :is(.cp-line, .cp-endpoint, .cp-pulses) { visibility: hidden; }
   .cp-comment-window {
     --cp-comment-height: 30px;
     height: calc(var(--cp-comment-height) * 2);
-    margin-top: 12px;
+    margin-top: 18px;
     overflow: hidden;
     mask-image: linear-gradient(transparent, black 14%, black 86%, transparent);
     font-size: var(--data-font-size);
@@ -150,10 +150,13 @@
   .cp-comment-row strong { color: var(--muted); }
   .cp-first { --series-color: var(--cp-first); }
   .cp-second { --series-color: var(--cp-second); }
-  .cp-plot { position: relative; isolation: isolate; }
+  .cp-plot { display: grid; grid-template-columns: minmax(0, 1fr) max-content; gap: 8px; isolation: isolate; }
+  .cp-plot-canvas { position: relative; min-width: 0; }
   .cp-chart { display: block; width: 100%; height: auto; overflow: visible; }
-  .cp-axis { position: absolute; inset: 0; color: rgb(112 123 141 / 50%); font-size: var(--data-font-size); pointer-events: none; }
-  .cp-axis-percent { position: absolute; left: 2px; top: var(--axis-position); transform: translateY(calc(-100% - 2px)); }
+  .cp-axis { color: rgb(112 123 141 / 50%); font-size: var(--data-font-size); pointer-events: none; }
+  .cp-axis-values { position: relative; }
+  .cp-axis-percent { position: relative; display: block; top: var(--axis-position); height: 0; text-align: left; }
+  .cp-axis-percent > span { display: block; transform: translateY(-50%); }
   .cp-axis-dates { position: absolute; inset: auto 0 0; }
   .cp-axis-dates span { position: absolute; bottom: 0; left: var(--date-position); transform: translateX(-50%); white-space: nowrap; }
   .cp-grid { stroke: var(--line); stroke-dasharray: 4 5; }
@@ -425,28 +428,30 @@
           <div class="cp-plot-shares"><span class="cp-first"></span><span class="cp-second"></span></div>
         </div>
         <div class="cp-plot">
-          <svg class="cp-chart" viewBox="0 0 360 92.667" role="img" aria-labelledby="cp-chart-title" aria-describedby="cp-chart-summary">
-            <title id="cp-chart-title">最近 7 天投注占比</title>
-            <desc id="cp-chart-summary"></desc>
-            <path class="cp-grid" d="M0 15.333H360 M0 43.333H360 M0 71.333H360"/>
-            <polyline class="cp-line cp-first"/>
-            <polyline class="cp-line cp-second"/>
-            <g class="cp-endpoint cp-first" aria-hidden="true">
-              <circle r="3.8"/>
-            </g>
-            <g class="cp-endpoint cp-second" aria-hidden="true">
-              <circle r="3.8"/>
-            </g>
-          </svg>
-          <div class="cp-pulses" aria-hidden="true">
-            <span class="cp-pulse-anchor cp-first"><span class="cp-pulse"></span><span class="cp-pulse"></span></span>
-            <span class="cp-pulse-anchor cp-second"><span class="cp-pulse"></span><span class="cp-pulse"></span></span>
+          <div class="cp-plot-canvas">
+            <svg class="cp-chart" viewBox="0 0 306 92.667" role="img" aria-labelledby="cp-chart-title" aria-describedby="cp-chart-summary">
+              <title id="cp-chart-title">最近 7 天投注占比</title>
+              <desc id="cp-chart-summary"></desc>
+              <path class="cp-grid" d="M0 15.333H306 M0 43.333H306 M0 71.333H306"/>
+              <polyline class="cp-line cp-first"/>
+              <polyline class="cp-line cp-second"/>
+              <g class="cp-endpoint cp-first" aria-hidden="true">
+                <circle r="3.8"/>
+              </g>
+              <g class="cp-endpoint cp-second" aria-hidden="true">
+                <circle r="3.8"/>
+              </g>
+            </svg>
+            <div class="cp-pulses" aria-hidden="true">
+              <span class="cp-pulse-anchor cp-first"><span class="cp-pulse"></span><span class="cp-pulse"></span></span>
+              <span class="cp-pulse-anchor cp-second"><span class="cp-pulse"></span><span class="cp-pulse"></span></span>
+            </div>
+            <div class="cp-axis cp-axis-dates" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
           </div>
-          <div class="cp-axis" aria-hidden="true">
-            <span class="cp-axis-percent" style="--axis-position: 16.55%">100%</span>
-            <span class="cp-axis-percent" style="--axis-position: 46.76%">50%</span>
-            <span class="cp-axis-percent" style="--axis-position: 76.98%">0%</span>
-            <div class="cp-axis-dates"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+          <div class="cp-axis cp-axis-values" aria-hidden="true">
+            <span class="cp-axis-percent" style="--axis-position: 16.55%"><span>100%</span></span>
+            <span class="cp-axis-percent" style="--axis-position: 46.76%"><span>50%</span></span>
+            <span class="cp-axis-percent" style="--axis-position: 76.98%"><span>0%</span></span>
           </div>
         </div>
         <div class="cp-comment-window" role="region" aria-label="CP 评论">
@@ -690,10 +695,10 @@
   }
 
   const pairings = [
-    { names: ["厉娜", "许飞"], question: "旅程结束后，厉娜和许飞还会再见吗？", choices: ["会再见", "各奔前路"], dailyShares: [54, 59, 56, 67, 72, 70, 81], pool: 12400 },
-    { names: ["王子璇", "文吉儿"], question: "王子璇和文吉儿会约定下一次旅行吗？", choices: ["会约定", "暂时不会"], dailyShares: [57, 53, 48, 45, 38, 31, 23], pool: 9800 },
-    { names: ["马天宇", "张萌"], question: "马天宇和张萌会一起回到雪山吗？", choices: ["会一起回去", "各自启程"], dailyShares: [44, 52, 47, 55, 49, 56, 51], pool: 8600 },
-    { names: ["白小纯", "青稚"], question: "白小纯和青稚会在终点站重逢吗？", choices: ["会重逢", "会错过"], dailyShares: [37, 41, 48, 54, 62, 58, 68], pool: 11200 }
+    { names: ["厉娜", "许飞"], question: "旅程结束后，厉娜和许飞还会再见吗？", choices: ["会再见", "各奔前路"], dailyShares: [49, 54, 59, 56, 67, 72, 70, 81], pool: 12400 },
+    { names: ["王子璇", "文吉儿"], question: "王子璇和文吉儿会约定下一次旅行吗？", choices: ["会约定", "暂时不会"], dailyShares: [60, 57, 53, 48, 45, 38, 31, 23], pool: 9800 },
+    { names: ["马天宇", "张萌"], question: "马天宇和张萌会一起回到雪山吗？", choices: ["会一起回去", "各自启程"], dailyShares: [48, 44, 52, 47, 55, 49, 56, 51], pool: 8600 },
+    { names: ["白小纯", "青稚"], question: "白小纯和青稚会在终点站重逢吗？", choices: ["会重逢", "会错过"], dailyShares: [35, 37, 41, 48, 54, 62, 58, 68], pool: 11200 }
   ];
   const commentsDock = document.querySelector(".comments-dock");
   const commentsSheet = document.querySelector(".comments-sheet");
@@ -867,6 +872,7 @@
   const cpShares = document.querySelectorAll(".cp-plot-shares span");
   const cpCommentTrack = document.querySelector(".cp-comment-track");
   const cpVotes = new Map();
+  const cpPools = pairings.map(pair => pair.pool);
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
   let activePairing;
   let cpCommentAnimation;
@@ -903,13 +909,14 @@
         old.setAttribute("aria-hidden", "true");
         old.textContent = oldCharacter ?? "";
         digit.append(old);
-        const timing = { duration: 380, easing: "ease-in-out" };
+        const direction = Math.random() < .5 ? -1 : 1;
+        const timing = { duration: 540, easing: "cubic-bezier(.25, .1, .25, 1)" };
         old.animate([
           { transform: "translateY(0) rotateX(0deg)" },
-          { transform: "translateY(-100%) rotateX(65deg)" }
+          { transform: `translateY(${direction * 100}%) rotateX(${direction * -65}deg)` }
         ], timing).onfinish = () => old.remove();
         next.animate([
-          { transform: "translateY(100%) rotateX(-65deg)" },
+          { transform: `translateY(${direction * -100}%) rotateX(${direction * 65}deg)` },
           { transform: "translateY(0) rotateX(0deg)" }
         ], timing);
       });
@@ -917,14 +924,11 @@
     });
   }
 
-  function scheduleCpCoins() {
-    setTimeout(() => {
-      if (!document.hidden) {
-        const { pool } = pairings[activePairing];
-        updateCpCoins(pool + 100 + Math.floor(Math.random() * 900), true);
-      }
-      scheduleCpCoins();
-    }, 1000 + Math.random() * 2000);
+  function refreshCpCoins() {
+    if (document.hidden) return;
+    const newCoins = 15 + Math.floor(Math.random() ** 2 * 165);
+    cpPools[activePairing] += newCoins;
+    updateCpCoins(cpPools[activePairing], true);
   }
 
   cpChoices.forEach((choice, index) => {
@@ -1020,24 +1024,30 @@
     cpButtons.forEach((button, position) => button.setAttribute("aria-pressed", String(index === position)));
     cpQuestion.textContent = pair.question;
     cpPhoto.style.backgroundPosition = `${index % 2 ? 85 : 15}% ${index >= 2 ? 100 : 0}%`;
-    updateCpCoins(pair.pool, false);
+    updateCpCoins(cpPools[index], false);
     const samples = pair.dailyShares;
     const series = [samples, samples.map(value => 100 - value)];
     const today = Date.now();
 
     cpChartTitle.textContent = `${pair.names.join("与")}最近 7 天投注占比`;
-    const datePositions = samples.map((_, index) => 54 + 282 * index / (samples.length - 1));
+    const plotWidth = 306;
+    const datedSamples = samples.slice(1);
+    const dateStep = plotWidth / datedSamples.length;
+    const datePositions = [0, ...datedSamples.map((_, index) => dateStep * (index + .5))];
     document.querySelectorAll(".cp-axis-dates span").forEach((label, index) => {
-      label.style.setProperty("--date-position", `${datePositions[index] / 360 * 100}%`);
+      label.style.setProperty("--date-position", `${datePositions[index + 1] / plotWidth * 100}%`);
       label.textContent = dateFormat.format(today - (6 - index) * 86400000);
     });
 
     const summaries = series.map((values, position) => {
-      const points = values.map((share, index) => `${datePositions[index]},${71.333 - 56 * share / 100}`);
+      const points = values.map((share, index) => {
+        const visibleShare = index === 0 ? (share + values[1]) / 2 : share;
+        return `${datePositions[index]},${71.333 - 56 * visibleShare / 100}`;
+      });
       cpLines[position].setAttribute("points", points.join(" "));
       cpEndpoints[position].setAttribute("transform", `translate(${points.at(-1)})`);
       const [x, y] = points.at(-1).split(",").map(Number);
-      cpPulseAnchors[position].style.setProperty("--pulse-x", `${x / 360 * 100}%`);
+      cpPulseAnchors[position].style.setProperty("--pulse-x", `${x / plotWidth * 100}%`);
       cpPulseAnchors[position].style.setProperty("--pulse-y", `${y / 92.667 * 100}%`);
 
       const share = values.at(-1);
@@ -1047,8 +1057,11 @@
       cpChoices[position].setAttribute("aria-pressed", String(cpVotes.get(index) === position));
       const percentage = document.createElement("b");
       percentage.textContent = `${share}%`;
+      const change = share - values.at(-2);
+      const trend = change > 0 ? "上涨" : change < 0 ? "下跌" : "持平";
       cpShares[position].replaceChildren(`${option} `, percentage);
-      return `${option} ${share}%，${coins} 硬币`;
+      cpShares[position].setAttribute("aria-label", `${option} ${share}%，较前一日${trend}`);
+      return `${option} ${share}%，${coins} 硬币，较前一日${trend}`;
     });
     cpChartSummary.textContent = summaries.join("；");
     showPairingComments(index);
@@ -1056,7 +1069,7 @@
   }
 
   showPairing(0);
-  scheduleCpCoins();
+  setInterval(refreshCpCoins, 5000);
   const livePredictions = Array.from(document.querySelectorAll('article[data-live]'), card => ({
     card,
     options: Array.from(card.querySelectorAll("li"), row => ({
