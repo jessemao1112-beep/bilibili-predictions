@@ -129,13 +129,13 @@
     align-items: baseline;
     justify-content: space-between;
     gap: 4px 10px;
-    margin: 22px 0 6px;
+    margin: 20px 0 0;
   }
   .cp-plot-heading h3 { margin: 0; font-size: .9375rem; }
   .cp-plot-shares { display: flex; flex: 0 0 auto; flex-wrap: wrap; max-width: 100%; gap: 4px 10px; font-size: .75rem; }
   .cp-plot-shares span { color: var(--series-color); white-space: nowrap; }
   .cp-plot-shares b { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-  .cp-plot[data-pending] :is(.cp-line, .cp-endpoint, .cp-pulses) { visibility: hidden; }
+  .cp-plot[data-pending] :is(.cp-line, .cp-endpoint) { visibility: hidden; }
   .cp-comment-window {
     --cp-comment-height: 30px;
     height: calc(var(--cp-comment-height) * 2);
@@ -150,34 +150,20 @@
   .cp-comment-row strong { color: var(--muted); }
   .cp-first { --series-color: var(--cp-first); }
   .cp-second { --series-color: var(--cp-second); }
-  .cp-plot { display: grid; grid-template-columns: minmax(0, 1fr) max-content; gap: 8px; isolation: isolate; }
-  .cp-plot-canvas { position: relative; min-width: 0; }
+  .cp-plot { position: relative; isolation: isolate; }
   .cp-chart { display: block; width: 100%; height: auto; overflow: visible; }
   .cp-axis { color: rgb(112 123 141 / 50%); font-size: var(--data-font-size); pointer-events: none; }
-  .cp-axis-values { position: relative; }
-  .cp-axis-percent { position: relative; display: block; top: var(--axis-position); height: 0; text-align: left; }
-  .cp-axis-percent > span { display: block; transform: translateY(-50%); }
   .cp-axis-dates { position: absolute; inset: auto 0 0; }
   .cp-axis-dates span { position: absolute; bottom: 0; left: var(--date-position); transform: translateX(-50%); white-space: nowrap; }
   .cp-grid { stroke: var(--line); stroke-dasharray: 4 5; }
   .cp-line { fill: none; stroke: var(--series-color); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
   .cp-endpoint { fill: var(--series-color); }
-  .cp-pulses { position: absolute; inset: 0; pointer-events: none; }
-  .cp-pulse-anchor {
-    position: absolute;
-    left: var(--pulse-x);
-    top: var(--pulse-y);
-    width: 10px;
-    height: 10px;
-    transform: translate(-50%, -50%);
-  }
   .cp-pulse {
-    position: absolute;
-    inset: 0;
-    border: 1.8px solid var(--series-color);
-    border-radius: 50%;
+    fill: none;
+    stroke: var(--series-color);
+    stroke-width: 1.8;
+    vector-effect: non-scaling-stroke;
     opacity: 0;
-    will-change: transform, opacity;
     animation: cp-endpoint-pulse 1.6s ease-out infinite;
   }
   .cp-pulse + .cp-pulse { animation-delay: .23s; }
@@ -428,31 +414,24 @@
           <div class="cp-plot-shares"><span class="cp-first"></span><span class="cp-second"></span></div>
         </div>
         <div class="cp-plot">
-          <div class="cp-plot-canvas">
-            <svg class="cp-chart" viewBox="0 0 306 92.667" role="img" aria-labelledby="cp-chart-title" aria-describedby="cp-chart-summary">
-              <title id="cp-chart-title">最近 7 天投注占比</title>
-              <desc id="cp-chart-summary"></desc>
-              <path class="cp-grid" d="M0 15.333H306 M0 43.333H306 M0 71.333H306"/>
-              <polyline class="cp-line cp-first"/>
-              <polyline class="cp-line cp-second"/>
-              <g class="cp-endpoint cp-first" aria-hidden="true">
-                <circle r="3.8"/>
-              </g>
-              <g class="cp-endpoint cp-second" aria-hidden="true">
-                <circle r="3.8"/>
-              </g>
-            </svg>
-            <div class="cp-pulses" aria-hidden="true">
-              <span class="cp-pulse-anchor cp-first"><span class="cp-pulse"></span><span class="cp-pulse"></span></span>
-              <span class="cp-pulse-anchor cp-second"><span class="cp-pulse"></span><span class="cp-pulse"></span></span>
-            </div>
-            <div class="cp-axis cp-axis-dates" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
-          </div>
-          <div class="cp-axis cp-axis-values" aria-hidden="true">
-            <span class="cp-axis-percent" style="--axis-position: 16.55%"><span>100%</span></span>
-            <span class="cp-axis-percent" style="--axis-position: 46.76%"><span>50%</span></span>
-            <span class="cp-axis-percent" style="--axis-position: 76.98%"><span>0%</span></span>
-          </div>
+          <svg class="cp-chart" viewBox="0 0 306 92.667" role="img" aria-labelledby="cp-chart-title" aria-describedby="cp-chart-summary">
+            <title id="cp-chart-title">最近 7 天投注占比</title>
+            <desc id="cp-chart-summary"></desc>
+            <path class="cp-grid" d="M0 15.333H306 M0 43.333H306 M0 71.333H306"/>
+            <polyline class="cp-line cp-first"/>
+            <polyline class="cp-line cp-second"/>
+            <g class="cp-endpoint cp-first" aria-hidden="true">
+              <circle class="cp-pulse" r="5"/>
+              <circle class="cp-pulse" r="5"/>
+              <circle r="3.8"/>
+            </g>
+            <g class="cp-endpoint cp-second" aria-hidden="true">
+              <circle class="cp-pulse" r="5"/>
+              <circle class="cp-pulse" r="5"/>
+              <circle r="3.8"/>
+            </g>
+          </svg>
+          <div class="cp-axis cp-axis-dates" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
         </div>
         <div class="cp-comment-window" role="region" aria-label="CP 评论">
           <div class="cp-comment-track"></div>
@@ -975,8 +954,6 @@
   const cpEndpoints = document.querySelectorAll(".cp-endpoint");
   const cpChartTitle = document.querySelector("#cp-chart-title");
   const cpPlot = document.querySelector(".cp-plot");
-  const cpPulseAnchors = document.querySelectorAll(".cp-pulse-anchor");
-  const cpPulseLayer = document.querySelector(".cp-pulses");
   let chartIsVisible = false;
   let chartAnimations = [];
 
@@ -993,7 +970,7 @@
         { strokeDasharray: dash, strokeDashoffset: 0 }
       ], { duration: 850, easing: "ease-out" });
     });
-    chartAnimations.push(...[...cpEndpoints, cpPulseLayer].map(point => point.animate([
+    chartAnimations.push(...Array.from(cpEndpoints, point => point.animate([
       { opacity: 0, offset: 0 },
       { opacity: 0, offset: .83 },
       { opacity: 1, offset: 1 }
@@ -1046,9 +1023,6 @@
       });
       cpLines[position].setAttribute("points", points.join(" "));
       cpEndpoints[position].setAttribute("transform", `translate(${points.at(-1)})`);
-      const [x, y] = points.at(-1).split(",").map(Number);
-      cpPulseAnchors[position].style.setProperty("--pulse-x", `${x / plotWidth * 100}%`);
-      cpPulseAnchors[position].style.setProperty("--pulse-y", `${y / 92.667 * 100}%`);
 
       const share = values.at(-1);
       const option = pair.choices[position];
