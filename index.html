@@ -69,10 +69,10 @@
     position: relative;
     isolation: isolate;
     overflow: hidden;
-    aspect-ratio: 2172 / 1628;
+    aspect-ratio: 2175 / 1085;
     max-height: 460px;
     margin-bottom: 6px;
-    background: url("./predictions-background.jpg?v=3") center 62% / cover no-repeat;
+    background: url("./predictions-background.jpg?v=3") center top / 100% auto no-repeat;
   }
   .prediction-background::before,
   .prediction-background::after {
@@ -97,46 +97,57 @@
     background: linear-gradient(transparent 77%, var(--blue) 100%);
   }
   .cp-module { margin-bottom: 36px; }
-  .cp-switcher.filters { margin-bottom: 18px; }
-  .cp-tab { position: relative; min-width: 0; }
-  .cp-mascot {
-    position: absolute;
-    inset: auto auto 100% 25%;
-    width: 50%;
-    aspect-ratio: 474 / 484;
-    overflow: hidden;
-    pointer-events: none;
+  .cp-switcher.filters {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-block: 3px;
+    margin-bottom: 12px;
+    mask-image: linear-gradient(to right, transparent, black var(--fade-start, 0px), black calc(100% - var(--fade-end, 0px)), transparent);
   }
-  .cp-mascot::before {
-    content: "";
-    display: block;
-    height: 100%;
-    background: url("./cp-mascot.png") center top / 100% auto no-repeat;
-    transform: translateY(100%);
-    transition: transform 220ms ease-in;
-  }
-  .cp-tab:has(button[aria-pressed="true"]) .cp-mascot::before {
-    transform: translateY(0);
-    transition: transform 300ms ease-out 70ms;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .cp-mascot::before, .cp-tab:has(button[aria-pressed="true"]) .cp-mascot::before { transition: none; }
-  }
+  .cp-switcher[data-more-left] { --fade-start: 16px; }
+  .cp-switcher[data-more-right] { --fade-end: 16px; }
   .cp-card {
     --cp-first: #d33b78;
     --cp-second: #1877b8;
   }
-  .cp-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-  .cp-choice {
-    min-height: 44px;
-    padding: 6px 8px;
-    border: 1px solid #fac2d6;
+  .cp-question-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .cp-question-row h2 { margin: 0; }
+  .cp-question-photo {
+    width: 52px;
+    aspect-ratio: 1;
+    flex: none;
     border-radius: 8px;
-    background: #fff3f7;
-    color: #97234e;
-    font-size: .875rem;
+    background: #dce8f2 url("./cp-scenes.jpg") center / 355.37% 200% no-repeat;
   }
-  .cp-choice[aria-pressed="true"] { background: #fb6699; border-color: #fb6699; color: #38202d; }
+  .cp-choices { display: flex; isolation: isolate; border-radius: 8px; }
+  .cp-choice {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 50px;
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    gap: 2px;
+    padding: 5px 12px;
+    border: 0;
+    background: var(--pink);
+    color: #38202d;
+    font-size: .875rem;
+    border-radius: 8px 0 0 8px;
+    clip-path: polygon(0 0, 100% 0, calc(100% - 14px) 100%, 0 100%);
+  }
+  .cp-choice + .cp-choice {
+    margin-inline-start: -14px;
+    background: var(--blue);
+    color: #fff;
+    border-radius: 0 8px 8px 0;
+    clip-path: polygon(14px 0, 100% 0, 100% 100%, 0 100%);
+  }
+  .cp-choice[aria-pressed="true"] .cp-choice-name { text-decoration: underline; text-underline-offset: 3px; }
+  .cp-choice:focus-visible { outline-offset: -5px; }
+  .cp-coin-window { height: 1.35em; line-height: 1.35; overflow: hidden; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .cp-coin-window span { display: block; }
   .cp-plot-heading {
     display: flex;
     flex-wrap: wrap;
@@ -156,7 +167,9 @@
     mask-image: linear-gradient(transparent, black 14%, black 86%, transparent);
     font-size: var(--data-font-size);
   }
-  .cp-comment-row { height: var(--cp-comment-height); padding: 5px 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cp-comment-row { display: flex; align-items: center; gap: 6px; height: var(--cp-comment-height); padding: 2px; }
+  .cp-comment-row .comment-avatar { width: 20px; height: 20px; font-size: .6875rem; }
+  .cp-comment-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .cp-comment-row strong { color: var(--muted); }
   .cp-first { --series-color: var(--cp-first); }
   .cp-second { --series-color: var(--cp-second); }
@@ -425,10 +438,13 @@
     <section class="cp-module" aria-label="CP 关系预测">
       <div class="cp-switcher filters" role="group" aria-label="切换 CP"></div>
       <div class="cp-card">
-        <h2 class="cp-question"></h2>
+        <div class="cp-question-row">
+          <div class="cp-question-photo" aria-hidden="true"></div>
+          <h2 class="cp-question"></h2>
+        </div>
         <div class="cp-choices" role="group" aria-label="预测选项">
-          <button class="cp-choice" type="button"></button>
-          <button class="cp-choice" type="button"></button>
+          <button class="cp-choice" type="button"><span class="cp-choice-name"></span><span class="cp-coin-window"></span></button>
+          <button class="cp-choice" type="button"><span class="cp-choice-name"></span><span class="cp-coin-window"></span></button>
         </div>
         <div class="cp-plot-heading">
           <h3>今日硬币占比</h3>
@@ -784,6 +800,15 @@
   ];
   document.querySelector(".comments-count").textContent = `${commentGroups[0].comments.length} 条`;
 
+  function createCommentAvatar(author) {
+    const avatar = document.createElement("span");
+    avatar.className = "comment-avatar";
+    avatar.setAttribute("aria-hidden", "true");
+    avatar.textContent = Array.from(author)[0];
+    avatar.style.setProperty("--avatar-hue", String(author.codePointAt(0) % 360));
+    return avatar;
+  }
+
   function showComments(index) {
     Array.from(commentsFilters.children).forEach((button, position) => {
       button.setAttribute("aria-pressed", String(position === index));
@@ -794,11 +819,7 @@
       const item = document.createElement("li");
       const byline = document.createElement("div");
       byline.className = "comment-byline";
-      const avatar = document.createElement("span");
-      avatar.className = "comment-avatar";
-      avatar.setAttribute("aria-hidden", "true");
-      avatar.textContent = Array.from(author)[0];
-      avatar.style.setProperty("--avatar-hue", String(author.codePointAt(0) % 360));
+      const avatar = createCommentAvatar(author);
       const name = document.createElement("strong");
       name.textContent = author;
       const dot = document.createElement("span");
@@ -892,6 +913,8 @@
 
   const cpSwitcher = document.querySelector(".cp-switcher");
   const cpQuestion = document.querySelector(".cp-question");
+  const cpPhoto = document.querySelector(".cp-question-photo");
+  const cpCoinWindows = document.querySelectorAll(".cp-coin-window");
   const cpChoices = document.querySelectorAll(".cp-choice");
   const cpShares = document.querySelectorAll(".cp-plot-shares span");
   const cpCommentTrack = document.querySelector(".cp-comment-track");
@@ -899,6 +922,48 @@
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
   let activePairing = 0;
   let cpCommentAnimation;
+
+  function updateCpFilterEdges() {
+    cpSwitcher.toggleAttribute("data-more-left", cpSwitcher.scrollLeft > 1);
+    cpSwitcher.toggleAttribute("data-more-right", cpSwitcher.scrollLeft + cpSwitcher.clientWidth < cpSwitcher.scrollWidth - 1);
+  }
+  cpSwitcher.addEventListener("scroll", updateCpFilterEdges, { passive: true });
+  new ResizeObserver(updateCpFilterEdges).observe(cpSwitcher);
+
+  function updateCpCoins(pool, roll) {
+    const share = pairings[activePairing].dailyShares.at(-1);
+    const first = Math.round(pool * share / 100);
+    [first, pool - first].forEach((coins, index) => {
+      const window = cpCoinWindows[index];
+      const previous = window.lastElementChild;
+      const next = document.createElement("span");
+      next.textContent = `${coinFormat.format(coins)} 硬币`;
+      if (!roll || reducedMotion.matches || !previous) {
+        window.replaceChildren(next);
+        return;
+      }
+      const track = document.createElement("span");
+      track.append(previous, next);
+      window.replaceChildren(track);
+      const animation = track.animate(
+        [{ transform: "translateY(0)" }, { transform: "translateY(-50%)" }],
+        { duration: 420, easing: "ease-out", fill: "forwards" }
+      );
+      animation.onfinish = () => {
+        if (window.firstElementChild === track) window.replaceChildren(next);
+      };
+    });
+  }
+
+  function scheduleCpCoins() {
+    setTimeout(() => {
+      if (!document.hidden) {
+        const { pool } = pairings[activePairing];
+        updateCpCoins(pool + 100 + Math.floor(Math.random() * 900), true);
+      }
+      scheduleCpCoins();
+    }, 1000 + Math.random() * 2000);
+  }
 
   cpChoices.forEach((choice, index) => {
     choice.addEventListener("click", () => {
@@ -915,7 +980,10 @@
       row.className = "cp-comment-row";
       const name = document.createElement("strong");
       name.textContent = author;
-      row.append(name, `：${message}`);
+      const text = document.createElement("span");
+      text.className = "cp-comment-text";
+      text.append(name, `：${message}`);
+      row.append(createCommentAvatar(author), text);
       return row;
     });
     cpCommentTrack.replaceChildren(...rows);
@@ -945,13 +1013,7 @@
     button.type = "button";
     button.textContent = pair.names.join(" & ");
     button.addEventListener("click", () => showPairing(index));
-    const tab = document.createElement("div");
-    tab.className = "cp-tab";
-    const mascot = document.createElement("span");
-    mascot.className = "cp-mascot";
-    mascot.setAttribute("aria-hidden", "true");
-    tab.append(mascot, button);
-    cpSwitcher.append(tab);
+    cpSwitcher.append(button);
     return button;
   });
 
@@ -960,6 +1022,8 @@
     const pair = pairings[index];
     cpButtons.forEach((button, position) => button.setAttribute("aria-pressed", String(index === position)));
     cpQuestion.textContent = pair.question;
+    cpPhoto.style.backgroundPosition = `${index % 2 ? 85 : 15}% ${index >= 2 ? 100 : 0}%`;
+    updateCpCoins(pair.pool, false);
     const samples = pair.dailyShares;
     const series = [samples, samples.map(value => 100 - value)];
     const today = Date.now();
@@ -979,7 +1043,7 @@
       const share = values.at(-1);
       const option = pair.choices[position];
       const coins = coinFormat.format(Math.round(pair.pool * share / 100));
-      cpChoices[position].textContent = `${option} ${coins} 硬币`;
+      cpChoices[position].querySelector(".cp-choice-name").textContent = option;
       cpChoices[position].setAttribute("aria-pressed", String(cpVotes.get(index) === position));
       cpShares[position].textContent = `${option} ${share}%`;
       return `${option} ${share}%，${coins} 硬币`;
@@ -989,6 +1053,8 @@
   }
 
   showPairing(0);
+  updateCpFilterEdges();
+  scheduleCpCoins();
   const livePredictions = Array.from(document.querySelectorAll('article[data-live]'), card => ({
     card,
     options: Array.from(card.querySelectorAll("li"), row => ({
