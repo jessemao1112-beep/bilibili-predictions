@@ -97,7 +97,7 @@
     background: linear-gradient(transparent 77%, var(--blue) 100%);
   }
   .cp-module { margin-bottom: 36px; }
-  .cp-switcher { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-bottom: 18px; }
+  .cp-switcher.filters { margin-bottom: 18px; }
   .cp-tab { position: relative; min-width: 0; }
   .cp-mascot {
     position: absolute;
@@ -122,83 +122,45 @@
   @media (prefers-reduced-motion: reduce) {
     .cp-mascot::before, .cp-tab:has(button[aria-pressed="true"]) .cp-mascot::before { transition: none; }
   }
-  .cp-switcher button {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 5px;
-    min-height: 56px;
-    padding: 5px;
-    border-radius: 10px;
-    background: rgb(255 255 255 / 22%);
-    font-size: .8125rem;
-    line-height: 1.2;
-  }
-  .cp-switcher button[aria-pressed="true"] { background: var(--white); color: var(--pink); }
-  .cp-thumb {
-    width: 100%;
-    aspect-ratio: 4 / 3;
-    border-radius: 6px;
-    background: #dce8f2 url("./cp-scenes.jpg") var(--photo-x, 10%) var(--photo-y, 0%) / 266.53% 200% no-repeat;
-  }
-  .cp-tab:nth-child(even) { --photo-x: 90%; }
-  .cp-tab:nth-child(n + 3) { --photo-y: 100%; }
   .cp-card {
     --cp-first: #d33b78;
     --cp-second: #1877b8;
   }
-  .cp-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
-  .cp-heading h2 { margin: 0; }
-  .cp-predict {
-    flex: none;
-    min-height: 34px;
-    width: calc((2em + 24px) * 1.2);
-    padding: 0;
-    border-radius: 17px;
-    background: var(--pink);
-    color: #fff;
+  .cp-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .cp-choice {
+    min-height: 44px;
+    padding: 6px 8px;
+    border: 1px solid #fac2d6;
+    border-radius: 8px;
+    background: #fff3f7;
+    color: #97234e;
     font-size: .875rem;
   }
-  .cp-dialog { width: min(100% - 40px, 360px); padding: 16px; border: 0; border-radius: 12px; color: var(--ink); }
-  .cp-dialog::backdrop { background: rgb(0 24 44 / 56%); }
-  .cp-dialog h2 { display: block; }
-  .cp-dialog form { display: grid; gap: 8px; }
-  .cp-dialog button { min-height: 44px; padding: 6px 12px; border-radius: 8px; background: #f0f6fb; color: var(--ink); }
-  .cp-dialog [aria-pressed="true"] { background: #fce8ef; color: #a52553; }
-  .cp-stats { display: flex; flex-wrap: wrap; gap: 21px; overflow: hidden; }
-  .cp-label {
-    position: relative;
-    display: grid;
-    flex: 1 0 auto;
-    width: max-content;
-    max-width: 100%;
-    gap: 3px;
+  .cp-choice[aria-pressed="true"] { background: #fb6699; border-color: #fb6699; color: #38202d; }
+  .cp-plot-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 4px 10px;
+    margin: 16px 0 12px;
+  }
+  .cp-plot-heading h3 { margin: 0; font-size: .9375rem; }
+  .cp-plot-shares { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-inline-start: auto; font-size: .75rem; }
+  .cp-plot-shares span { color: var(--series-color); white-space: nowrap; }
+  .cp-comment-window {
+    --cp-comment-height: 30px;
+    height: calc(var(--cp-comment-height) * 3);
+    margin-top: 12px;
+    overflow: hidden;
+    mask-image: linear-gradient(transparent, black 14%, black 86%, transparent);
     font-size: var(--data-font-size);
   }
-  /* The divider outside the current row or column is clipped by .cp-stats. */
-  .cp-label + .cp-label::before,
-  .cp-label + .cp-label::after {
-    content: "";
-    position: absolute;
-    background: #e3e6eb;
-  }
-  .cp-label + .cp-label::before { inset: 0 auto 0 -11px; width: 1px; }
-  .cp-label + .cp-label::after { inset: -11px 0 auto 0; height: 1px; }
-  .cp-label-title { display: flex; align-items: center; gap: 5px; white-space: nowrap; font-size: 1rem; font-weight: 700; }
-  .cp-label-title::before {
-    content: "";
-    width: 7px;
-    height: 7px;
-    flex: none;
-    border-radius: 50%;
-    background: var(--series-color);
-  }
-  .cp-label-detail { display: flex; flex-wrap: wrap; gap: 2px 6px; padding-inline-start: 12px; color: var(--muted); white-space: nowrap; }
+  .cp-comment-row { height: var(--cp-comment-height); padding: 5px 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cp-comment-row strong { color: var(--muted); }
   .cp-first { --series-color: var(--cp-first); }
   .cp-second { --series-color: var(--cp-second); }
-  .cp-plot { position: relative; margin-top: 24px; }
+  .cp-plot { position: relative; }
   .cp-chart { display: block; width: 100%; height: auto; overflow: visible; }
   .cp-axis { position: absolute; inset: 0; color: #707b8d; font-size: var(--data-font-size); pointer-events: none; }
   .cp-axis-percent { position: absolute; left: 2px; top: var(--axis-position); transform: translateY(calc(-100% - 2px)); }
@@ -224,8 +186,6 @@
   @media (prefers-reduced-motion: reduce) {
     .cp-pulse { animation: none; }
   }
-  .cp-label [data-direction="up"] { color: #b12c4c; }
-  .cp-label [data-direction="down"] { color: #16734e; }
   .filters {
     display: flex;
     flex-wrap: wrap;
@@ -463,21 +423,16 @@
   <div class="prediction-background" aria-hidden="true"><div class="background-fade"></div></div>
   <div class="prediction-content">
     <section class="cp-module" aria-label="CP 关系预测">
-      <div class="cp-switcher" role="group" aria-label="切换 CP"></div>
+      <div class="cp-switcher filters" role="group" aria-label="切换 CP"></div>
       <div class="cp-card">
-        <div class="cp-heading">
-          <h2 class="cp-question"></h2>
-          <button class="cp-predict" type="button" aria-haspopup="dialog" aria-controls="cp-dialog">预测</button>
+        <h2 class="cp-question"></h2>
+        <div class="cp-choices" role="group" aria-label="预测选项">
+          <button class="cp-choice" type="button"></button>
+          <button class="cp-choice" type="button"></button>
         </div>
-        <div class="cp-stats" role="group" aria-label="当前占比、今日新增硬币数和较昨日变化">
-          <span class="cp-label cp-first">
-            <span class="cp-label-title"></span>
-            <span class="cp-label-detail"><span class="cp-label-coins"></span><strong></strong></span>
-          </span>
-          <span class="cp-label cp-second">
-            <span class="cp-label-title"></span>
-            <span class="cp-label-detail"><span class="cp-label-coins"></span><strong></strong></span>
-          </span>
+        <div class="cp-plot-heading">
+          <h3>今日硬币占比</h3>
+          <div class="cp-plot-shares"><span class="cp-first"></span><span class="cp-second"></span></div>
         </div>
         <div class="cp-plot">
           <svg class="cp-chart" viewBox="0 0 360 120.667" role="img" aria-labelledby="cp-chart-title" aria-describedby="cp-chart-summary">
@@ -503,6 +458,9 @@
             <span class="cp-axis-percent" style="--axis-position: 82.32%">0%</span>
             <div class="cp-axis-dates"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
           </div>
+        </div>
+        <div class="cp-comment-window" role="region" aria-label="CP 评论">
+          <div class="cp-comment-track"></div>
         </div>
       </div>
     </section>
@@ -709,14 +667,6 @@
     </div>
   </div>
 </section>
-<dialog class="cp-dialog" id="cp-dialog" aria-labelledby="cp-dialog-title">
-  <h2 id="cp-dialog-title"></h2>
-  <form method="dialog">
-    <button type="button" class="cp-choice"></button>
-    <button type="button" class="cp-choice"></button>
-    <button type="submit">取消</button>
-  </form>
-</dialog>
 <div class="notice" id="notice" role="status" hidden></div>
 <script>
   const notice = document.querySelector("#notice");
@@ -942,32 +892,46 @@
 
   const cpSwitcher = document.querySelector(".cp-switcher");
   const cpQuestion = document.querySelector(".cp-question");
-  const cpPredict = document.querySelector(".cp-predict");
-  const cpDialog = document.querySelector("#cp-dialog");
-  const cpDialogTitle = document.querySelector("#cp-dialog-title");
-  const cpChoices = cpDialog.querySelectorAll(".cp-choice");
+  const cpChoices = document.querySelectorAll(".cp-choice");
+  const cpShares = document.querySelectorAll(".cp-plot-shares span");
+  const cpCommentTrack = document.querySelector(".cp-comment-track");
   const cpVotes = new Map();
+  const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
   let activePairing = 0;
-
-  cpPredict.addEventListener("click", () => {
-    const pair = pairings[activePairing];
-    cpDialogTitle.textContent = pair.question;
-    cpChoices.forEach((choice, index) => {
-      choice.textContent = pair.choices[index];
-      choice.setAttribute("aria-pressed", String(cpVotes.get(activePairing) === index));
-    });
-    cpDialog.showModal();
-  });
+  let cpCommentAnimation;
 
   cpChoices.forEach((choice, index) => {
     choice.addEventListener("click", () => {
       cpVotes.set(activePairing, index);
-      cpDialog.close();
-      showNotice(`已记录演示预测：${choice.textContent}`);
+      cpChoices.forEach((button, position) => button.setAttribute("aria-pressed", String(position === index)));
+      showNotice(`已记录演示预测：${pairings[activePairing].choices[index]}`);
     });
   });
 
-  const cpLabels = document.querySelectorAll(".cp-label");
+  function showPairingComments(index) {
+    cpCommentAnimation?.cancel();
+    const rows = pairingComments[index].map(({ author, message }) => {
+      const row = document.createElement("div");
+      row.className = "cp-comment-row";
+      const name = document.createElement("strong");
+      name.textContent = author;
+      row.append(name, `：${message}`);
+      return row;
+    });
+    cpCommentTrack.replaceChildren(...rows);
+  }
+
+  setInterval(() => {
+    if (document.hidden || reducedMotion.matches) return;
+    const first = cpCommentTrack.firstElementChild;
+    if (!first || cpCommentTrack.children.length <= 3) return;
+    cpCommentAnimation = cpCommentTrack.animate(
+      [{ transform: "translateY(0)" }, { transform: `translateY(-${first.offsetHeight}px)` }],
+      { duration: 480, easing: "ease-in-out" }
+    );
+    cpCommentAnimation.onfinish = () => cpCommentTrack.append(first);
+  }, 2600);
+
   const cpChartSummary = document.querySelector("#cp-chart-summary");
   const coinFormat = new Intl.NumberFormat("zh-CN");
   const dateFormat = new Intl.DateTimeFormat("en-US", {
@@ -979,10 +943,7 @@
   const cpButtons = pairings.map((pair, index) => {
     const button = document.createElement("button");
     button.type = "button";
-    const thumbnail = document.createElement("span");
-    thumbnail.className = "cp-thumb";
-    thumbnail.setAttribute("aria-hidden", "true");
-    button.append(thumbnail, pair.names.join(" & "));
+    button.textContent = pair.names.join(" & ");
     button.addEventListener("click", () => showPairing(index));
     const tab = document.createElement("div");
     tab.className = "cp-tab";
@@ -1001,7 +962,6 @@
     cpQuestion.textContent = pair.question;
     const samples = pair.dailyShares;
     const series = [samples, samples.map(value => 100 - value)];
-    const dailyPoolFactors = [.79, .91, .84, .96, .88, 1, 1];
     const today = Date.now();
 
     cpChartTitle.textContent = `${pair.names.join("与")}最近 7 天投注占比`;
@@ -1012,34 +972,23 @@
     });
 
     const summaries = series.map((values, position) => {
-      const dailyCoins = values.map((share, index) => Math.round(pair.pool * dailyPoolFactors[index] * share / 100));
       const points = values.map((share, index) => `${datePositions[index]},${99.333 - 84 * share / 100}`);
       cpLines[position].setAttribute("points", points.join(" "));
       cpEndpoints[position].setAttribute("transform", `translate(${points.at(-1)})`);
 
-      const label = cpLabels[position];
-      const todayCoins = dailyCoins.at(-1);
-      const yesterdayCoins = dailyCoins.at(-2);
-      const change = (todayCoins - yesterdayCoins) * 100 / yesterdayCoins;
-      const direction = change > 0 ? "up" : change < 0 ? "down" : "flat";
-      const amount = `${coinFormat.format(Math.abs(change).toFixed(1))}%`;
-      const trend = { up: `▲ +${amount}`, down: `▼ −${amount}`, flat: "0%" }[direction];
-      const title = `${pair.choices[position]} ${values.at(-1)}%`;
-      const coins = `今日新增 ${coinFormat.format(todayCoins)} 硬币`;
-
-      label.querySelector(".cp-label-title").textContent = title;
-      label.querySelector(".cp-label-coins").textContent = coins;
-      const delta = label.querySelector("strong");
-      delta.dataset.direction = direction;
-      delta.textContent = `较昨日 ${trend}`;
-      return `${title}，${coins}，${delta.textContent}`;
+      const share = values.at(-1);
+      const option = pair.choices[position];
+      const coins = coinFormat.format(Math.round(pair.pool * share / 100));
+      cpChoices[position].textContent = `${option} ${coins} 硬币`;
+      cpChoices[position].setAttribute("aria-pressed", String(cpVotes.get(index) === position));
+      cpShares[position].textContent = `${option} ${share}%`;
+      return `${option} ${share}%，${coins} 硬币`;
     });
     cpChartSummary.textContent = summaries.join("；");
+    showPairingComments(index);
   }
 
   showPairing(0);
-
-  const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
   const livePredictions = Array.from(document.querySelectorAll('article[data-live]'), card => ({
     card,
     options: Array.from(card.querySelectorAll("li"), row => ({
