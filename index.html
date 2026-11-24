@@ -132,13 +132,13 @@
     padding: 5px 12px;
     border: 0;
     background: var(--pink);
-    color: #38202d;
+    color: #fff;
     font-size: .875rem;
     border-radius: 8px 0 0 8px;
     clip-path: polygon(0 0, 100% 0, calc(100% - 14px) 100%, 0 100%);
   }
   .cp-choice + .cp-choice {
-    margin-inline-start: -14px;
+    margin-inline-start: -4px;
     background: var(--blue);
     color: #fff;
     border-radius: 0 8px 8px 0;
@@ -146,8 +146,11 @@
   }
   .cp-choice[aria-pressed="true"] .cp-choice-name { text-decoration: underline; text-underline-offset: 3px; }
   .cp-choice:focus-visible { outline-offset: -5px; }
-  .cp-coin-window { height: 1.35em; line-height: 1.35; overflow: hidden; white-space: nowrap; font-variant-numeric: tabular-nums; }
-  .cp-coin-window span { display: block; }
+  .cp-coin-window { height: 1.35em; line-height: 1.35; overflow: hidden; white-space: nowrap; font-size: .8125rem; font-variant-numeric: tabular-nums; }
+  .cp-digit { display: inline-block; position: relative; width: 1ch; vertical-align: top; perspective: 2em; }
+  .cp-coin-number { font: .8125rem/1.35 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .cp-digit-face { display: block; }
+  .cp-digit-old { position: absolute; inset: 0; }
   .cp-plot-heading {
     display: flex;
     flex-wrap: wrap;
@@ -161,7 +164,7 @@
   .cp-plot-shares span { color: var(--series-color); white-space: nowrap; }
   .cp-comment-window {
     --cp-comment-height: 30px;
-    height: calc(var(--cp-comment-height) * 3);
+    height: calc(var(--cp-comment-height) * 2);
     margin-top: 12px;
     overflow: hidden;
     mask-image: linear-gradient(transparent, black 14%, black 86%, transparent);
@@ -934,24 +937,45 @@
     const share = pairings[activePairing].dailyShares.at(-1);
     const first = Math.round(pool * share / 100);
     [first, pool - first].forEach((coins, index) => {
-      const window = cpCoinWindows[index];
-      const previous = window.lastElementChild;
-      const next = document.createElement("span");
-      next.textContent = `${coinFormat.format(coins)} 硬币`;
-      if (!roll || reducedMotion.matches || !previous) {
-        window.replaceChildren(next);
-        return;
-      }
-      const track = document.createElement("span");
-      track.append(previous, next);
-      window.replaceChildren(track);
-      const animation = track.animate(
-        [{ transform: "translateY(0)" }, { transform: "translateY(-50%)" }],
-        { duration: 420, easing: "ease-out", fill: "forwards" }
-      );
-      animation.onfinish = () => {
-        if (window.firstElementChild === track) window.replaceChildren(next);
-      };
+      const coinWindow = cpCoinWindows[index];
+      const previous = coinWindow.dataset.coins ?? "";
+      const formatted = coinFormat.format(coins);
+      coinWindow.dataset.coins = formatted;
+      const display = document.createElement("span");
+      display.className = "cp-coin-number";
+
+      Array.from(formatted).forEach((character, position) => {
+        if (!/\d/.test(character)) {
+          display.append(character);
+          return;
+        }
+        const digit = document.createElement("span");
+        digit.className = "cp-digit";
+        const next = document.createElement("span");
+        next.className = "cp-digit-face";
+        next.textContent = character;
+        digit.append(next);
+        display.append(digit);
+
+        const oldCharacter = previous.at(position - formatted.length);
+        if (!roll || reducedMotion.matches || !previous || character === oldCharacter) return;
+
+        const old = document.createElement("span");
+        old.className = "cp-digit-face cp-digit-old";
+        old.setAttribute("aria-hidden", "true");
+        old.textContent = oldCharacter ?? "";
+        digit.append(old);
+        const timing = { duration: 380, easing: "ease-in-out" };
+        old.animate([
+          { transform: "translateY(0) rotateX(0deg)" },
+          { transform: "translateY(-100%) rotateX(65deg)" }
+        ], timing).onfinish = () => old.remove();
+        next.animate([
+          { transform: "translateY(100%) rotateX(-65deg)" },
+          { transform: "translateY(0) rotateX(0deg)" }
+        ], timing);
+      });
+      coinWindow.replaceChildren(display, " 硬币");
     });
   }
 
@@ -992,7 +1016,7 @@
   setInterval(() => {
     if (document.hidden || reducedMotion.matches) return;
     const first = cpCommentTrack.firstElementChild;
-    if (!first || cpCommentTrack.children.length <= 3) return;
+    if (!first || cpCommentTrack.children.length <= 2) return;
     cpCommentAnimation = cpCommentTrack.animate(
       [{ transform: "translateY(0)" }, { transform: `translateY(-${first.offsetHeight}px)` }],
       { duration: 480, easing: "ease-in-out" }
