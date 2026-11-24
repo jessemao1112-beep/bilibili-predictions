@@ -135,7 +135,7 @@
   .cp-plot-shares { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-inline-start: auto; font-size: .75rem; }
   .cp-plot-shares span { color: var(--series-color); white-space: nowrap; }
   .cp-plot-shares b { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-  .cp-chart[data-pending] :is(.cp-line, .cp-endpoint) { visibility: hidden; }
+  .cp-plot[data-pending] :is(.cp-line, .cp-endpoint, .cp-pulses) { visibility: hidden; }
   .cp-comment-window {
     --cp-comment-height: 30px;
     height: calc(var(--cp-comment-height) * 2);
@@ -150,7 +150,7 @@
   .cp-comment-row strong { color: var(--muted); }
   .cp-first { --series-color: var(--cp-first); }
   .cp-second { --series-color: var(--cp-second); }
-  .cp-plot { position: relative; }
+  .cp-plot { position: relative; isolation: isolate; }
   .cp-chart { display: block; width: 100%; height: auto; overflow: visible; }
   .cp-axis { position: absolute; inset: 0; color: rgb(112 123 141 / 50%); font-size: var(--data-font-size); pointer-events: none; }
   .cp-axis-percent { position: absolute; left: 2px; top: var(--axis-position); transform: translateY(calc(-100% - 2px)); }
@@ -159,12 +159,22 @@
   .cp-grid { stroke: var(--line); stroke-dasharray: 4 5; }
   .cp-line { fill: none; stroke: var(--series-color); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
   .cp-endpoint { fill: var(--series-color); }
+  .cp-pulses { position: absolute; inset: 0; pointer-events: none; }
+  .cp-pulse-anchor {
+    position: absolute;
+    left: var(--pulse-x);
+    top: var(--pulse-y);
+    width: 10px;
+    height: 10px;
+    transform: translate(-50%, -50%);
+  }
   .cp-pulse {
-    fill: none;
-    stroke: var(--series-color);
-    stroke-width: 1.8;
-    vector-effect: non-scaling-stroke;
+    position: absolute;
+    inset: 0;
+    border: 1.8px solid var(--series-color);
+    border-radius: 50%;
     opacity: 0;
+    will-change: transform, opacity;
     animation: cp-endpoint-pulse 1.6s ease-out infinite;
   }
   .cp-pulse + .cp-pulse { animation-delay: .23s; }
@@ -422,16 +432,16 @@
             <polyline class="cp-line cp-first"/>
             <polyline class="cp-line cp-second"/>
             <g class="cp-endpoint cp-first" aria-hidden="true">
-              <circle class="cp-pulse" r="5"/>
-              <circle class="cp-pulse" r="5"/>
               <circle r="3.8"/>
             </g>
             <g class="cp-endpoint cp-second" aria-hidden="true">
-              <circle class="cp-pulse" r="5"/>
-              <circle class="cp-pulse" r="5"/>
               <circle r="3.8"/>
             </g>
           </svg>
+          <div class="cp-pulses" aria-hidden="true">
+            <span class="cp-pulse-anchor cp-first"><span class="cp-pulse"></span><span class="cp-pulse"></span></span>
+            <span class="cp-pulse-anchor cp-second"><span class="cp-pulse"></span><span class="cp-pulse"></span></span>
+          </div>
           <div class="cp-axis" aria-hidden="true">
             <span class="cp-axis-percent" style="--axis-position: 16.55%">100%</span>
             <span class="cp-axis-percent" style="--axis-position: 46.76%">50%</span>
@@ -960,13 +970,15 @@
   const cpLines = document.querySelectorAll(".cp-line");
   const cpEndpoints = document.querySelectorAll(".cp-endpoint");
   const cpChartTitle = document.querySelector("#cp-chart-title");
-  const cpChart = document.querySelector(".cp-chart");
+  const cpPlot = document.querySelector(".cp-plot");
+  const cpPulseAnchors = document.querySelectorAll(".cp-pulse-anchor");
+  const cpPulseLayer = document.querySelector(".cp-pulses");
   let chartIsVisible = false;
   let chartAnimations = [];
 
   function playCpChartEntrance() {
-    if (!chartIsVisible || !cpChart.hasAttribute("data-pending")) return;
-    cpChart.removeAttribute("data-pending");
+    if (!chartIsVisible || !cpPlot.hasAttribute("data-pending")) return;
+    cpPlot.removeAttribute("data-pending");
     if (reducedMotion.matches) return;
 
     chartAnimations = [...cpLines].map(line => {
@@ -977,7 +989,7 @@
         { strokeDasharray: dash, strokeDashoffset: 0 }
       ], { duration: 850, easing: "ease-out" });
     });
-    chartAnimations.push(...Array.from(cpEndpoints, point => point.animate([
+    chartAnimations.push(...[...cpEndpoints, cpPulseLayer].map(point => point.animate([
       { opacity: 0, offset: 0 },
       { opacity: 0, offset: .83 },
       { opacity: 1, offset: 1 }
@@ -987,7 +999,7 @@
   new IntersectionObserver(([entry]) => {
     chartIsVisible = entry.isIntersecting;
     playCpChartEntrance();
-  }).observe(cpChart);
+  }).observe(cpPlot);
 
   const cpButtons = pairings.map((pair, index) => {
     const button = document.createElement("button");
@@ -1003,7 +1015,7 @@
     chartAnimations.forEach(animation => animation.cancel());
     chartAnimations = [];
     activePairing = index;
-    cpChart.toggleAttribute("data-pending", !reducedMotion.matches);
+    cpPlot.toggleAttribute("data-pending", !reducedMotion.matches);
     const pair = pairings[index];
     cpButtons.forEach((button, position) => button.setAttribute("aria-pressed", String(index === position)));
     cpQuestion.textContent = pair.question;
@@ -1024,6 +1036,9 @@
       const points = values.map((share, index) => `${datePositions[index]},${71.333 - 56 * share / 100}`);
       cpLines[position].setAttribute("points", points.join(" "));
       cpEndpoints[position].setAttribute("transform", `translate(${points.at(-1)})`);
+      const [x, y] = points.at(-1).split(",").map(Number);
+      cpPulseAnchors[position].style.setProperty("--pulse-x", `${x / 360 * 100}%`);
+      cpPulseAnchors[position].style.setProperty("--pulse-y", `${y / 92.667 * 100}%`);
 
       const share = values.at(-1);
       const option = pair.choices[position];
